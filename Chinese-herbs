@@ -1,0 +1,545 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>中藥材調撥與月度統計整合系統</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <style>
+    body { background-color: #f8f9fa; padding: 20px; }
+    .badge-pending { background-color: #ffc107; color: #000; }
+    #loadingSpinner { display: none; }
+    .nav-tabs .nav-link { font-size: 1.1rem; font-weight: bold; }
+    .vendor-badge {
+      display: inline-block;
+      background-color: #e9ecef;
+      color: #495057;
+      padding: 3px 8px;
+      margin: 2px;
+      border-radius: 4px;
+      font-size: 0.90rem;
+    }
+    .preview-box {
+      background-color: #f1f3f5;
+      border-radius: 6px;
+      padding: 15px;
+    }
+  </style>
+</head>
+<body>
+
+  <div class="container bg-white p-4 rounded shadow-sm">
+    <!-- 頂部標題與載入圖示 -->
+    <div class="d-flex justify-content-between align-items-center mb-3">
+      <h2 class="text-primary m-0">中藥材管理系統</h2>
+      <div id="loadingSpinner" class="spinner-border text-primary spinner-border-sm" role="status">
+        <span class="visually-hidden">載入中...</span>
+      </div>
+    </div>
+
+    <!-- 功能切換頁籤 (Tabs) -->
+    <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
+      <li class="nav-item" role="presentation">
+        <button class="nav-link active" id="input-tab" data-bs-toggle="tab" data-bs-target="#input-pane" type="button" role="tab">✍️ 快速文字批次輸入 / 調撥</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-pane" type="button" role="tab" onclick="calculateMonthlySummary()">📊 月度總量統計</button>
+      </li>
+    </ul>
+
+    <!-- 頁籤內容區域 -->
+    <div class="tab-content" id="mainTabContent">
+
+      <!-- ================= 頁籤一：輸入與歷史紀錄 ================= -->
+      <div class="tab-pane fade show active" id="input-pane" role="tabpanel">
+        
+        <!-- 新增批次資料表單 (方案 A: 文字區塊解析) -->
+        <div class="card mb-4">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="m-0">快速批次輸入區</h5>
+            <span class="text-muted small">全程維持中文輸入法，無需切換欄位</span>
+          </div>
+          <div class="card-body">
+            <form id="batchForm">
+              <div class="row mb-3">
+                <div class="col-md-12">
+                  <label class="form-label fw-bold">調撥申請日期</label>
+                  <input type="date" id="batchDate" class="form-control" required>
+                </div>
+              </div>
+
+              <div class="mb-3">
+                <label class="form-label fw-bold">文字批次輸入框 <span class="text-primary fs-6 font-monospace">(一行一筆，格式：藥材名稱 數量 廠商名稱[選填])</span></label>
+                <textarea id="bulkInputText" class="form-control font-monospace" rows="5" placeholder="例如：
+甘草 5
+黃耆 10 順天堂
+當歸 2 莊松榮" oninput="parseBulkInput()"></textarea>
+                <div class="form-text">提示：名稱與數量之間請用「空白」隔開。如未填數量預設為 1。</div>
+              </div>
+
+              <!-- 即時解析預覽區域 -->
+              <div id="previewArea" class="preview-box mb-3" style="display: none;">
+                <h6 class="fw-bold text-secondary mb-2">🔍 即時解析結果預覽：</h6>
+                <div class="table-responsive">
+                  <table class="table table-sm table-bordered bg-white mb-0">
+                    <thead class="table-light">
+                      <tr>
+                        <th>藥材名稱</th>
+                        <th style="width: 100px;" class="text-center">數量</th>
+                        <th>廠商名稱 / 到貨狀態</th>
+                      </tr>
+                    </thead>
+                    <tbody id="previewTableBody">
+                      <!-- 動態渲染預覽結果 -->
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+
+              <button type="submit" id="submitBtn" class="btn btn-success w-100 mt-2" disabled>一次性儲存至雲端試算表</button>
+            </form>
+          </div>
+        </div>
+
+        <!-- 歷史紀錄 -->
+        <div class="card">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="m-0">雲端同步歷史紀錄</h5>
+            <div>
+              <button class="btn btn-sm btn-outline-primary me-2" onclick="fetchLogs()">🔄 重新整理資料</button>
+              <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()">匯出明細 CSV</button>
+            </div>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-striped table-hover align-middle">
+                <thead>
+                  <tr>
+                    <th>調撥日期</th>
+                    <th>藥材名稱</th>
+                    <th>數量</th>
+                    <th>廠商狀態與到貨日期</th>
+                    <th style="width: 150px;" class="text-center">紀錄操作</th>
+                  </tr>
+                </thead>
+                <tbody id="logTableBody">
+                  <!-- 歷史紀錄 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- ================= 頁籤二：月度總量統計 ================= -->
+      <div class="tab-pane fade" id="summary-pane" role="tabpanel">
+        
+        <!-- 篩選與工具列 -->
+        <div class="card mb-4">
+          <div class="card-body">
+            <div class="row g-3 align-items-center">
+              <div class="col-md-4">
+                <label class="form-label fw-bold">選擇統計月份：</label>
+                <input type="month" id="monthPicker" class="form-control" onchange="calculateMonthlySummary()">
+              </div>
+              <div class="col-md-5">
+                <label class="form-label">搜尋藥材名稱：</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="輸入藥材名稱關鍵字..." oninput="renderSummaryTable()">
+              </div>
+              <div class="col-md-3 d-flex align-items-end">
+                <button class="btn btn-success w-100" onclick="exportSummaryCSV()">匯出月報表</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- 月度總量統計表格 -->
+        <div class="card">
+          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+            <h5 class="m-0" id="summaryTitle">月度彙整結果</h5>
+            <span class="badge bg-info text-dark" id="totalSpeciesBadge">共 0 種品項</span>
+          </div>
+          <div class="card-body">
+            <div class="table-responsive">
+              <table class="table table-bordered table-hover align-middle">
+                <thead class="table-primary">
+                  <tr>
+                    <th style="width: 60px;" class="text-center">序號</th>
+                    <th style="width: 180px;">藥材名稱</th>
+                    <th style="width: 140px;" class="text-center">月度調撥總數</th>
+                    <th>廠商細項數量彙整</th>
+                    <th style="width: 100px;" class="text-center">調撥次數</th>
+                  </tr>
+                </thead>
+                <tbody id="summaryTableBody">
+                  <!-- 自動統計繪製 -->
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+    </div>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+  <script>
+    // ⚠️ 請替換為您的 Google Apps Script 部署 URL ⚠️
+    const GAS_URL = "https://script.google.com/macros/s/AKfycbx2-oNxzhdM7fEYlcNnt6QCBW8Cp0fgBlmiShbkWttmqLHIGT0rYQXi6mtpjTa0ALM/exec";
+
+    let logs = [];          // 雲端歷史紀錄
+    let monthlyMap = {};    // 月度統計對映表
+    let parsedItems = [];   // 當前解析出的待儲存品項
+
+    // 初始化頁面
+    document.addEventListener("DOMContentLoaded", () => {
+      const now = new Date();
+      document.getElementById('batchDate').value = now.toISOString().split('T')[0];
+      
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      document.getElementById('monthPicker').value = `${year}-${month}`;
+
+      fetchLogs();
+    });
+
+    function setLoading(isLoading) {
+      document.getElementById('loadingSpinner').style.display = isLoading ? 'inline-block' : 'none';
+    }
+
+    function fetchLogs() {
+      setLoading(true);
+      fetch(GAS_URL)
+        .then(res => res.json())
+        .then(data => {
+          logs = data;
+          renderLogs();
+          calculateMonthlySummary();
+          setLoading(false);
+        })
+        .catch(err => {
+          alert("無法讀取雲端資料，請檢查網路或 GAS 網址！");
+          setLoading(false);
+        });
+    }
+
+    // ================= 方案 A：文字解析邏輯 =================
+    function parseBulkInput() {
+      const rawText = document.getElementById('bulkInputText').value;
+      const lines = rawText.split('\n');
+      const date = document.getElementById('batchDate').value;
+      const todayStr = new Date().toISOString().split('T')[0];
+
+      parsedItems = [];
+      const previewTableBody = document.getElementById('previewTableBody');
+      previewTableBody.innerHTML = '';
+
+      lines.forEach(line => {
+        const trimmed = line.trim();
+        if (!trimmed) return;
+
+        // 使用空白/Tab 分割文字
+        const parts = trimmed.split(/\s+/);
+        
+        const name = parts[0];
+        let qty = 1;
+        let vendorInput = "";
+
+        if (parts.length >= 2) {
+          // 檢查第二個元素是不是數字
+          if (!isNaN(parts[1])) {
+            qty = parts[1];
+            if (parts.length >= 3) {
+              vendorInput = parts.slice(2).join(" ");
+            }
+          } else {
+            // 如果第二個元素不是數字，代表沒填數量，直接接廠商名稱
+            vendorInput = parts.slice(1).join(" ");
+          }
+        }
+
+        let vendorText = "待到貨通知";
+        if (vendorInput) {
+          vendorText = `${vendorInput} (${todayStr} 到貨)`;
+        }
+
+        parsedItems.push({
+          id: Date.now() + "_" + Math.floor(Math.random() * 10000),
+          date: date,
+          name: name,
+          qty: qty,
+          vendor: vendorText
+        });
+
+        // 渲染預覽表格 Row
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="fw-bold">${name}</td>
+          <td class="text-center">${qty}</td>
+          <td><span class="badge ${vendorInput ? 'bg-secondary' : 'badge-pending'}">${vendorText}</span></td>
+        `;
+        previewTableBody.appendChild(tr);
+      });
+
+      const previewArea = document.getElementById('previewArea');
+      const submitBtn = document.getElementById('submitBtn');
+
+      if (parsedItems.length > 0) {
+        previewArea.style.display = 'block';
+        submitBtn.disabled = false;
+        submitBtn.innerText = `一次性儲存共 ${parsedItems.length} 項品項至雲端`;
+      } else {
+        previewArea.style.display = 'none';
+        submitBtn.disabled = true;
+        submitBtn.innerText = "一次性儲存至雲端試算表";
+      }
+    }
+
+    document.getElementById('batchForm').addEventListener('submit', function(e) {
+      e.preventDefault();
+      if (parsedItems.length === 0) return;
+
+      setLoading(true);
+
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "add", items: parsedItems })
+      })
+      .then(res => res.json())
+      .then(() => {
+        alert(`成功新增 ${parsedItems.length} 筆品項至 Google 試算表！`);
+        document.getElementById('bulkInputText').value = '';
+        parseBulkInput();
+        fetchLogs();
+      })
+      .catch(() => {
+        alert("儲存失敗，請再試一次！");
+        setLoading(false);
+      });
+    });
+
+    // 補填/修改廠商與到貨日期
+    function updateVendor(logId) {
+      const log = logs.find(item => item.id == logId);
+      if (!log) return;
+
+      const todayStr = new Date().toISOString().split('T')[0];
+      
+      let currentVendor = "";
+      let currentDate = todayStr;
+
+      if (log.vendor && log.vendor !== "待到貨通知") {
+        const match = log.vendor.match(/^(.*?)\s*\((.*?) 到貨\)$/);
+        if (match) {
+          currentVendor = match[1];
+          currentDate = match[2];
+        } else {
+          currentVendor = log.vendor;
+        }
+      }
+
+      const newVendor = prompt(`請輸入【${log.name}】的實際到貨廠商名稱：`, currentVendor);
+      if (newVendor === null || newVendor.trim() === "") return;
+
+      const newArriveDate = prompt(`請輸入【${log.name}】的實際到貨日期 (格式：YYYY-MM-DD)：`, currentDate);
+      if (newArriveDate === null || newArriveDate.trim() === "") return;
+
+      const updatedVendorStr = `${newVendor.trim()} (${newArriveDate.trim()} 到貨)`;
+      sendUpdateToGAS(log.id, log.name, log.qty, updatedVendorStr);
+    }
+
+    function editLogItem(logId) {
+      const log = logs.find(item => item.id == logId);
+      if (!log) return;
+
+      const newName = prompt(`請修改藥材名稱：`, log.name);
+      if (newName === null || newName.trim() === "") return;
+
+      const newQty = prompt(`請修改數量：`, log.qty);
+      if (newQty === null || newQty.trim() === "" || isNaN(newQty)) return;
+
+      sendUpdateToGAS(log.id, newName.trim(), newQty.trim(), log.vendor);
+    }
+
+    function sendUpdateToGAS(id, name, qty, vendor) {
+      setLoading(true);
+      fetch(GAS_URL, {
+        method: "POST",
+        body: JSON.stringify({ action: "update", id: id, name: name, qty: qty, vendor: vendor })
+      })
+      .then(res => res.json())
+      .then(() => fetchLogs());
+    }
+
+    function deleteLogItem(logId) {
+      const log = logs.find(item => item.id == logId);
+      if (!log) return;
+
+      if (confirm(`確定要從雲端刪除【${log.name}】這筆紀錄嗎？`)) {
+        setLoading(true);
+        fetch(GAS_URL, {
+          method: "POST",
+          body: JSON.stringify({ action: "delete", id: logId })
+        })
+        .then(res => res.json())
+        .then(() => fetchLogs());
+      }
+    }
+
+    function renderLogs() {
+      const logTableBody = document.getElementById('logTableBody');
+      logTableBody.innerHTML = '';
+      
+      logs.forEach(log => {
+        const isPending = log.vendor === "待到貨通知";
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${log.date}</td>
+          <td>${log.name}</td>
+          <td>${log.qty}</td>
+          <td>
+            <span class="badge ${isPending ? 'badge-pending' : 'bg-secondary'}">${log.vendor}</span>
+            <button class="btn btn-sm btn-link p-0 ms-1 text-decoration-none" onclick="updateVendor('${log.id}')">
+              ${isPending ? '✏️ 補填到貨資訊' : '✏️ 修改廠商/日期'}
+            </button>
+          </td>
+          <td class="text-center">
+            <button class="btn btn-sm btn-outline-primary py-0 px-1 me-1" onclick="editLogItem('${log.id}')">✏️ 編輯</button>
+            <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteLogItem('${log.id}')">🗑️ 刪除</button>
+          </td>
+        `;
+        logTableBody.appendChild(tr);
+      });
+    }
+
+    function exportToCSV() {
+      if (logs.length === 0) {
+        alert("目前沒有紀錄可匯出！");
+        return;
+      }
+      const todayStr = new Date().toISOString().split('T')[0];
+      let csvContent = "調撥申請日期,藥材名稱,調撥數量,廠商狀態與到貨日期\n";
+      logs.forEach(log => {
+        csvContent += `"${log.date}","${log.name}","${log.qty}","${log.vendor}"\n`;
+      });
+      downloadCSV(csvContent, `中藥材調撥明細紀錄_${todayStr}.csv`);
+    }
+
+    // ================= 月度總量與廠商統計邏輯 =================
+    function calculateMonthlySummary() {
+      const selectedMonth = document.getElementById('monthPicker').value;
+      if (!selectedMonth) return;
+
+      monthlyMap = {};
+
+      logs.forEach(item => {
+        if (item.date && item.date.startsWith(selectedMonth)) {
+          const name = item.name.trim();
+          const qty = parseFloat(item.qty) || 0;
+          
+          let vendorName = "待到貨通知";
+          if (item.vendor && item.vendor.trim() !== "待到貨通知") {
+            const match = item.vendor.match(/^(.*?)\s*\(/);
+            vendorName = match ? match[1].trim() : item.vendor.trim();
+          }
+
+          if (!monthlyMap[name]) {
+            monthlyMap[name] = { totalQty: 0, count: 0, vendors: {} };
+          }
+          
+          monthlyMap[name].totalQty += qty;
+          monthlyMap[name].count += 1;
+
+          if (!monthlyMap[name].vendors[vendorName]) {
+            monthlyMap[name].vendors[vendorName] = 0;
+          }
+          monthlyMap[name].vendors[vendorName] += qty;
+        }
+      });
+
+      document.getElementById('summaryTitle').innerText = `${selectedMonth} 月度彙整結果`;
+      renderSummaryTable();
+    }
+
+    function renderSummaryTable() {
+      const tableBody = document.getElementById('summaryTableBody');
+      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      tableBody.innerHTML = '';
+
+      const itemNames = Object.keys(monthlyMap);
+      let displayIndex = 1;
+
+      if (itemNames.length === 0) {
+        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">該月份尚無任何調撥紀錄</td></tr>`;
+        document.getElementById('totalSpeciesBadge').innerText = `共 0 種品項`;
+        return;
+      }
+
+      itemNames.forEach(name => {
+        if (keyword && !name.toLowerCase().includes(keyword)) return;
+
+        const data = monthlyMap[name];
+        
+        let vendorBadgesHtml = '';
+        Object.keys(data.vendors).forEach(vName => {
+          const vQty = data.vendors[vName];
+          const isPending = vName === "待到貨通知";
+          const badgeClass = isPending ? 'badge-pending' : 'vendor-badge';
+          
+          vendorBadgesHtml += `<span class="badge ${badgeClass} border me-1">${vName}: <b>${vQty}</b></span>`;
+        });
+
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td class="text-center fw-bold text-secondary">${displayIndex++}</td>
+          <td class="fw-bold text-dark">${name}</td>
+          <td class="text-center fs-5 text-primary fw-bold">${data.totalQty}</td>
+          <td>${vendorBadgesHtml}</td>
+          <td class="text-center text-muted">${data.count} 次</td>
+        `;
+        tableBody.appendChild(tr);
+      });
+
+      document.getElementById('totalSpeciesBadge').innerText = `共 ${displayIndex - 1} 種品項`;
+    }
+
+    function exportSummaryCSV() {
+      const selectedMonth = document.getElementById('monthPicker').value;
+      const itemNames = Object.keys(monthlyMap);
+
+      if (itemNames.length === 0) {
+        alert("目前月份沒有資料可匯出！");
+        return;
+      }
+
+      let csvContent = `月份,藥材名稱,當月調撥總數量,廠商統計細項,調撥次數\n`;
+      itemNames.forEach(name => {
+        const data = monthlyMap[name];
+        const vendorDetailStr = Object.keys(data.vendors)
+          .map(v => `${v}: ${data.vendors[v]}`)
+          .join(" | ");
+
+        csvContent += `"${selectedMonth}","${name}","${data.totalQty}","${vendorDetailStr}","${data.count}"\n`;
+      });
+
+      downloadCSV(csvContent, `中藥材月度總量統計(含廠商)_${selectedMonth}.csv`);
+    }
+
+    function downloadCSV(csvContent, fileName) {
+      const blob = new Blob(['\uFEFF' + csvContent], { type: 'text/csv;charset=utf-8;' });
+      const link = document.createElement("a");
+      const url = URL.createObjectURL(blob);
+      link.setAttribute("href", url);
+      link.setAttribute("download", fileName);
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+    }
+  </script>
+
+</body>
+</html>
