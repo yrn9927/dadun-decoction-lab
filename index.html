@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>管理系統主控台</title>
+  <title>大墩水藥室管理系統</title>
   <script src="https://cdn.tailwindcss.com"></script>
 </head>
 <body class="bg-slate-100 min-h-screen flex items-center justify-center p-6">
@@ -11,38 +11,41 @@
     
     <!-- 頁面標題 -->
     <div class="text-center mb-10">
-      <h1 class="text-3xl font-bold text-slate-800 mb-2">🌿 工作管理系統入口</h1>
+      <h1 class="text-3xl font-bold text-slate-800 mb-2">🌿 大墩水藥室管理系統</h1>
       <p class="text-slate-500 text-sm">請選擇您要使用的功能模組</p>
     </div>
 
     <!-- 功能卡片區塊 -->
     <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
       
-      <!-- 卡片 1 -->
-      <a href="inventory.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
+      <!-- 卡片 1：指向 option-a.html -->
+      <a href="option-a.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
         <div class="text-4xl mb-4">📦</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition">藥材庫存管理</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">提供庫存查詢、警示篩選、AI 進貨單辨識與歷史異動登記。</p>
+        <h2 class="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition">進貨與到貨追蹤</h2>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">適合文字批次貼上（如 LINE），可自動解析數量與廠商，追蹤到貨狀態並匯出 CSV。</p>
         <span class="inline-block mt-4 text-xs font-bold text-emerald-600">進入系統 &rarr;</span>
       </a>
 
-      <!-- 卡片 2 -->
-      <a href="app2.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">📝</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition">系統 2 名稱</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">請在此處填寫第二個網頁的主要功能簡介說明。</p>
+      <!-- 卡片 2：指向 option-b.html -->
+      <a href="option-b.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
+        <div class="text-4xl mb-4">🔄</div>
+        <h2 class="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition">院所調撥系統</h2>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">適合固定品項點選與跨院區調撥，具備院所流向選擇與歷史紀錄查詢。</p>
         <span class="inline-block mt-4 text-xs font-bold text-blue-600">進入系統 &rarr;</span>
       </a>
 
-      <!-- 卡片 3 -->
-      <a href="app3.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
+      <!-- 卡片 3：指向 option-c.html（擴充預留區） -->
+      <a href="option-c.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
         <div class="text-4xl mb-4">📊</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-amber-600 transition">系統 3 名稱</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">請在此處填寫第三個網頁的主要功能簡介說明。</p>
+        <h2 class="text-xl font-bold text-slate-800 group-hover:text-amber-600 transition">擴充模組 C</h2>
+        <p class="text-xs text-slate-500 mt-2 leading-relaxed">預留給第三個功能模組使用（如未用到，點擊會顯示 404 或可先隱藏）。</p>
         <span class="inline-block mt-4 text-xs font-bold text-amber-600">進入系統 &rarr;</span>
       </a>
 
     </div>
+  </div>
+</body>
+</html>
   </div>
 </body>
 </html>
