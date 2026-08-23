@@ -3,40 +3,188 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>中藥材調撥與月度統計整合系統</title>
+  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
   <style>
-    body { background-color: #f8f9fa; padding: 20px; }
-    .badge-pending { background-color: #ffc107; color: #000; }
-    #loadingSpinner { display: none; }
-    .nav-tabs .nav-link { font-size: 1.1rem; font-weight: bold; }
+    :root {
+      --bg-main: #f7f4ef;
+      --text-primary: #4a3b32;
+      --text-muted: #7e6f65;
+      --brand-brown: #6b5240;
+      --brand-brown-hover: #543f30;
+      --brand-sage: #5c7258;
+      --brand-sage-hover: #485b45;
+      --border-color: #e5dec9;
+      --card-bg: #ffffff;
+      --accent-light: #f3ede2;
+      --badge-bg: #f4efe6;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--text-primary);
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      padding: 20px;
+    }
+
+    /* 頂部 Header 樣式 (參照風澤品牌風格) */
+    .brand-header {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 12px 24px;
+      box-shadow: 0 2px 8px rgba(74, 59, 50, 0.05);
+    }
+    .brand-logo {
+      height: 38px;
+      object-fit: contain;
+    }
+    .header-divider {
+      width: 1px;
+      height: 24px;
+      background-color: #c5b8a5;
+    }
+    .header-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      letter-spacing: 0.5px;
+    }
+
+    /* 右側按鈕與標籤 */
+    .btn-home {
+      background-color: #ffffff;
+      color: var(--text-primary);
+      border: 1px solid var(--border-color);
+      border-radius: 50rem;
+      padding: 6px 16px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      transition: all 0.2s ease;
+      display: inline-flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .btn-home:hover {
+      background-color: var(--accent-light);
+      color: var(--brand-brown);
+      border-color: #d1c5b4;
+    }
+    .badge-brand {
+      background-color: var(--badge-bg);
+      color: var(--text-primary);
+      border: 1px solid #e2d8c8;
+      border-radius: 50rem;
+      padding: 6px 16px;
+      font-size: 0.88rem;
+      font-weight: 500;
+    }
+
+    /* 卡片與容器 */
+    .main-container {
+      background-color: #ffffff;
+      border: 1px solid var(--border-color);
+      border-radius: 12px;
+      padding: 24px;
+      box-shadow: 0 4px 12px rgba(74, 59, 50, 0.03);
+    }
+    .card {
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+    }
+    .card-header {
+      background-color: var(--accent-light);
+      border-bottom: 1px solid var(--border-color);
+      color: var(--text-primary);
+      font-weight: 600;
+    }
+
+    /* 頁籤 Nav Tabs */
+    .nav-tabs {
+      border-bottom: 2px solid var(--border-color);
+    }
+    .nav-tabs .nav-link {
+      color: var(--text-muted);
+      font-weight: 600;
+      border: none;
+      border-bottom: 3px solid transparent;
+      border-radius: 0;
+      padding: 10px 18px;
+    }
+    .nav-tabs .nav-link.active {
+      color: var(--brand-brown);
+      background-color: transparent;
+      border-bottom: 3px solid var(--brand-brown);
+    }
+
+    /* 按鈕樣式重設 */
+    .btn-brand-primary {
+      background-color: var(--brand-sage);
+      color: #ffffff;
+      border: none;
+    }
+    .btn-brand-primary:hover {
+      background-color: var(--brand-sage-hover);
+      color: #ffffff;
+    }
+    .btn-outline-brand {
+      color: var(--brand-brown);
+      border-color: var(--brand-brown);
+    }
+    .btn-outline-brand:hover {
+      background-color: var(--brand-brown);
+      color: #ffffff;
+    }
+
+    /* 表格與 Badge */
+    .table-light-header th {
+      background-color: var(--accent-light);
+      color: var(--text-primary);
+    }
     .vendor-badge {
       display: inline-block;
-      background-color: #e9ecef;
-      color: #495057;
+      background-color: var(--badge-bg);
+      color: var(--text-primary);
+      border: 1px solid #e2d8c8;
       padding: 3px 8px;
       margin: 2px;
       border-radius: 4px;
-      font-size: 0.90rem;
+      font-size: 0.88rem;
+    }
+    .badge-pending {
+      background-color: #fcefdc;
+      color: #8c5b18;
+      border: 1px solid #f3d4a4;
     }
     .preview-box {
-      background-color: #f1f3f5;
+      background-color: var(--accent-light);
       border-radius: 6px;
       padding: 15px;
     }
+    #loadingSpinner { display: none; }
   </style>
 </head>
 <body>
 
-  <div class="container bg-white p-4 rounded shadow-sm">
-    <!-- 頂部標題與載入圖示 -->
-    <div class="d-flex justify-content-between align-items-center mb-3">
-      <h2 class="text-primary m-0">中藥材管理系統</h2>
-      <div id="loadingSpinner" class="spinner-border text-primary spinner-border-sm" role="status">
+  <!-- 頂部品牌抬頭列 (LOGO / 標題 / 回首頁按鈕) -->
+  <header class="brand-header mb-4 d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-3">
+      <img src="logo.png" alt="風澤醫療體系 LOGO" class="brand-logo">
+      <div class="header-divider"></div>
+      <h1 class="header-title mb-0">大墩水藥室管理系統</h1>
+    </div>
+    <div class="d-flex align-items-center gap-2">
+      <a href="index.html" class="btn btn-home text-decoration-none">
+        🏠 返回主控台
+      </a>
+      <span class="badge-brand">風澤醫療體系</span>
+      <div id="loadingSpinner" class="spinner-border spinner-border-sm text-secondary ms-2" role="status">
         <span class="visually-hidden">載入中...</span>
       </div>
     </div>
+  </header>
 
+  <div class="main-container">
     <!-- 功能切換頁籤 (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
       <li class="nav-item" role="presentation">
@@ -53,9 +201,9 @@
       <!-- ================= 頁籤一：輸入與歷史紀錄 ================= -->
       <div class="tab-pane fade show active" id="input-pane" role="tabpanel">
         
-        <!-- 新增批次資料表單 (方案 A: 文字區塊解析) -->
+        <!-- 新增批次資料表單 -->
         <div class="card mb-4">
-          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0">快速批次輸入區</h5>
             <span class="text-muted small">全程維持中文輸入法，無需切換欄位</span>
           </div>
@@ -69,7 +217,7 @@
               </div>
 
               <div class="mb-3">
-                <label class="form-label fw-bold">文字批次輸入框 <span class="text-primary fs-6 font-monospace">(一行一筆，格式：藥材名稱 數量 廠商名稱[選填])</span></label>
+                <label class="form-label fw-bold">文字批次輸入框 <span class="fs-6 font-monospace" style="color: var(--brand-brown);">(一行一筆，格式：藥材名稱 數量 廠商名稱[選填])</span></label>
                 <textarea id="bulkInputText" class="form-control font-monospace" rows="5" placeholder="例如：
 甘草 5
 黃耆 10 順天堂
@@ -79,10 +227,10 @@
 
               <!-- 即時解析預覽區域 -->
               <div id="previewArea" class="preview-box mb-3" style="display: none;">
-                <h6 class="fw-bold text-secondary mb-2">🔍 即時解析結果預覽：</h6>
+                <h6 class="fw-bold mb-2" style="color: var(--brand-brown);">🔍 即時解析結果預覽：</h6>
                 <div class="table-responsive">
                   <table class="table table-sm table-bordered bg-white mb-0">
-                    <thead class="table-light">
+                    <thead class="table-light-header">
                       <tr>
                         <th>藥材名稱</th>
                         <th style="width: 100px;" class="text-center">數量</th>
@@ -96,17 +244,17 @@
                 </div>
               </div>
 
-              <button type="submit" id="submitBtn" class="btn btn-success w-100 mt-2" disabled>一次性儲存至雲端試算表</button>
+              <button type="submit" id="submitBtn" class="btn btn-brand-primary w-100 mt-2 py-2 fw-bold" disabled>一次性儲存至雲端試算表</button>
             </form>
           </div>
         </div>
 
         <!-- 歷史紀錄 -->
         <div class="card">
-          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0">雲端同步歷史紀錄</h5>
             <div>
-              <button class="btn btn-sm btn-outline-primary me-2" onclick="fetchLogs()">🔄 重新整理資料</button>
+              <button class="btn btn-sm btn-outline-brand me-2" onclick="fetchLogs()">🔄 重新整理資料</button>
               <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()">匯出明細 CSV</button>
             </div>
           </div>
@@ -148,7 +296,7 @@
                 <input type="text" id="searchInput" class="form-control" placeholder="輸入藥材名稱關鍵字..." oninput="renderSummaryTable()">
               </div>
               <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-success w-100" onclick="exportSummaryCSV()">匯出月報表</button>
+                <button class="btn btn-brand-primary w-100" onclick="exportSummaryCSV()">匯出月報表</button>
               </div>
             </div>
           </div>
@@ -156,14 +304,14 @@
 
         <!-- 月度總量統計表格 -->
         <div class="card">
-          <div class="card-header bg-light d-flex justify-content-between align-items-center">
+          <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0" id="summaryTitle">月度彙整結果</h5>
-            <span class="badge bg-info text-dark" id="totalSpeciesBadge">共 0 種品項</span>
+            <span class="badge badge-brand" id="totalSpeciesBadge">共 0 種品項</span>
           </div>
           <div class="card-body">
             <div class="table-responsive">
               <table class="table table-bordered table-hover align-middle">
-                <thead class="table-primary">
+                <thead class="table-light-header">
                   <tr>
                     <th style="width: 60px;" class="text-center">序號</th>
                     <th style="width: 180px;">藥材名稱</th>
@@ -188,14 +336,12 @@
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // ⚠️ 請替換為您的 Google Apps Script 部署 URL ⚠️
     const GAS_URL = "https://script.google.com/macros/s/AKfycbx2-oNxzhdM7fEYlcNnt6QCBW8Cp0fgBlmiShbkWttmqLHIGT0rYQXi6mtpjTa0ALM/exec";
 
-    let logs = [];          // 雲端歷史紀錄
-    let monthlyMap = {};    // 月度統計對映表
-    let parsedItems = [];   // 當前解析出的待儲存品項
+    let logs = [];          
+    let monthlyMap = {};    
+    let parsedItems = [];   
 
-    // 初始化頁面
     document.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       document.getElementById('batchDate').value = now.toISOString().split('T')[0];
@@ -227,7 +373,6 @@
         });
     }
 
-    // ================= 方案 A：文字解析邏輯 =================
     function parseBulkInput() {
       const rawText = document.getElementById('bulkInputText').value;
       const lines = rawText.split('\n');
@@ -242,22 +387,18 @@
         const trimmed = line.trim();
         if (!trimmed) return;
 
-        // 使用空白/Tab 分割文字
         const parts = trimmed.split(/\s+/);
-        
         const name = parts[0];
         let qty = 1;
         let vendorInput = "";
 
         if (parts.length >= 2) {
-          // 檢查第二個元素是不是數字
           if (!isNaN(parts[1])) {
             qty = parts[1];
             if (parts.length >= 3) {
               vendorInput = parts.slice(2).join(" ");
             }
           } else {
-            // 如果第二個元素不是數字，代表沒填數量，直接接廠商名稱
             vendorInput = parts.slice(1).join(" ");
           }
         }
@@ -275,12 +416,11 @@
           vendor: vendorText
         });
 
-        // 渲染預覽表格 Row
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="fw-bold">${name}</td>
           <td class="text-center">${qty}</td>
-          <td><span class="badge ${vendorInput ? 'bg-secondary' : 'badge-pending'}">${vendorText}</span></td>
+          <td><span class="badge ${vendorInput ? 'vendor-badge' : 'badge-pending'}">${vendorText}</span></td>
         `;
         previewTableBody.appendChild(tr);
       });
@@ -322,13 +462,11 @@
       });
     });
 
-    // 補填/修改廠商與到貨日期
     function updateVendor(logId) {
       const log = logs.find(item => item.id == logId);
       if (!log) return;
 
       const todayStr = new Date().toISOString().split('T')[0];
-      
       let currentVendor = "";
       let currentDate = todayStr;
 
@@ -402,13 +540,13 @@
           <td>${log.name}</td>
           <td>${log.qty}</td>
           <td>
-            <span class="badge ${isPending ? 'badge-pending' : 'bg-secondary'}">${log.vendor}</span>
-            <button class="btn btn-sm btn-link p-0 ms-1 text-decoration-none" onclick="updateVendor('${log.id}')">
+            <span class="badge ${isPending ? 'badge-pending' : 'vendor-badge'}">${log.vendor}</span>
+            <button class="btn btn-sm btn-link p-0 ms-1 text-decoration-none" style="color: var(--brand-brown);" onclick="updateVendor('${log.id}')">
               ${isPending ? '✏️ 補填到貨資訊' : '✏️ 修改廠商/日期'}
             </button>
           </td>
           <td class="text-center">
-            <button class="btn btn-sm btn-outline-primary py-0 px-1 me-1" onclick="editLogItem('${log.id}')">✏️ 編輯</button>
+            <button class="btn btn-sm btn-outline-brand py-0 px-1 me-1" onclick="editLogItem('${log.id}')">✏️ 編輯</button>
             <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteLogItem('${log.id}')">🗑️ 刪除</button>
           </td>
         `;
@@ -429,7 +567,6 @@
       downloadCSV(csvContent, `中藥材調撥明細紀錄_${todayStr}.csv`);
     }
 
-    // ================= 月度總量與廠商統計邏輯 =================
     function calculateMonthlySummary() {
       const selectedMonth = document.getElementById('monthPicker').value;
       if (!selectedMonth) return;
@@ -490,14 +627,14 @@
           const isPending = vName === "待到貨通知";
           const badgeClass = isPending ? 'badge-pending' : 'vendor-badge';
           
-          vendorBadgesHtml += `<span class="badge ${badgeClass} border me-1">${vName}: <b>${vQty}</b></span>`;
+          vendorBadgesHtml += `<span class="badge ${badgeClass} me-1">${vName}: <b>${vQty}</b></span>`;
         });
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="text-center fw-bold text-secondary">${displayIndex++}</td>
           <td class="fw-bold text-dark">${name}</td>
-          <td class="text-center fs-5 text-primary fw-bold">${data.totalQty}</td>
+          <td class="text-center fs-5 fw-bold" style="color: var(--brand-brown);">${data.totalQty}</td>
           <td>${vendorBadgesHtml}</td>
           <td class="text-center text-muted">${data.count} 次</td>
         `;
