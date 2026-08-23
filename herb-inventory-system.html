@@ -903,7 +903,6 @@
     }
   }
   currentStocktakeBatch = null;
-}
               } else if (log.type === '盤點' || log.type === '盤點修正') {
                 const sessionKey = submissionTime ? `${logDate}_${submissionTime}` : `${logDate}_${log.operator || ''}_stocktake`;
 
