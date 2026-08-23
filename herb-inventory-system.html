@@ -4,10 +4,10 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>藥材櫃位庫存管理系統</title>
+  <title>大墩水藥室管理系統 - 藥材櫃位庫存</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
-  <!-- 引入手繪感字型 (Caveat) -->
+  <!-- 引入手繪感與典雅字型 -->
   <link href="https://fonts.googleapis.com/css2?family=Caveat:wght@600&family=Noto+Sans+TC:wght@400;500;700&display=swap" rel="stylesheet">
   <style>
     .font-hand {
@@ -15,359 +15,372 @@
     }
   </style>
 </head>
-<body class="bg-amber-50/40 p-3 md:p-6 min-h-screen">
-  <div id="app" class="max-w-7xl mx-auto">
+<body class="bg-[#F8F5F0] text-[#3D312E] min-h-screen pb-12 font-sans antialiased">
+  <div id="app">
     
-    <!-- 頂部頁籤 -->
-    <div class="flex border-b border-gray-300 mb-6 bg-white rounded-t-xl shadow-sm">
-      <button @click="currentTab = 'overview'" :class="['px-6 py-3.5 font-bold transition-all', currentTab === 'overview' ? 'border-b-2 border-emerald-600 text-emerald-600 bg-emerald-50/50' : 'text-gray-500 hover:text-gray-700']">
-        📦 庫存總覽與查詢
-      </button>
-      <button @click="currentTab = 'log'" :class="['px-6 py-3.5 font-bold transition-all', currentTab === 'log' ? 'border-b-2 border-emerald-600 text-emerald-600 bg-emerald-50/50' : 'text-gray-500 hover:text-gray-700']">
-        📝 庫存異動登記（進/出/盤點）
-      </button>
-      <button @click="currentTab = 'history'; fetchLogs()" :class="['px-6 py-3.5 font-bold transition-all flex items-center gap-2', currentTab === 'history' ? 'border-b-2 border-emerald-600 text-emerald-600 bg-emerald-50/50' : 'text-gray-500 hover:text-gray-700']">
-        📜 歷史異動明細
-        <span v-if="loading" class="animate-spin text-xs">🌀</span>
-      </button>
-    </div>
-
-    <!-- TAB 1: 庫存總覽 -->
-    <div v-if="currentTab === 'overview'" class="bg-white p-5 rounded-xl shadow-sm border border-gray-200">
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-slate-50 p-4 rounded-lg border">
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">🔍 關鍵字搜尋（藥名/別稱/儲位）</label>
-          <input type="text" v-model="searchKeyword" placeholder="如：薤白、久白、1-1..." class="border p-2 rounded w-full bg-white focus:ring-2 focus:ring-emerald-400">
+    <!-- 頂部 Header & 導覽列 -->
+    <header class="bg-white/90 backdrop-blur border-b border-[#E5DEC9] sticky top-0 z-30 mb-6 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+        <div class="flex items-center">
+          <img src="logo.png" alt="風澤醫療體系" class="h-8 md:h-9 object-contain">
+          <div class="h-6 w-[1px] bg-[#D1C7BD] mx-3 md:mx-4"></div>
+          <h1 class="text-base md:text-lg font-bold text-[#4A3B32] tracking-wide">大墩水藥室管理系統</h1>
         </div>
         <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">🗄️ 區域/櫃位篩選</label>
-          <select v-model="selectedCabinet" class="border p-2 rounded w-full bg-white focus:ring-2 focus:ring-emerald-400 font-medium">
-            <option value="ALL">🌐 全部櫃位 (所有藥材)</option>
-            <optgroup label="📦 常規藥櫃 (1~17櫃)">
-              <option v-for="n in 17" :key="n" :value="n.toString()">第 {{ n }} 櫃</option>
-            </optgroup>
-            <optgroup label="🌿 特殊儲位">
-              <option value="G">G 櫃（草類）</option>
-              <option value="R">R 櫃（冷藏類）</option>
-            </optgroup>
-          </select>
+          <a href="index.html" class="inline-flex items-center gap-1.5 px-4 py-1.5 rounded-full text-xs md:text-sm font-bold bg-[#F4EFEA] hover:bg-[#E8DFD5] text-[#5C4033] border border-[#D8C9B9] transition shadow-sm">
+            🏠 返回主控台
+          </a>
         </div>
-
-        <!-- 警示狀態複選下拉選單 (Multi-Select Dropdown) -->
-        <div class="relative flex items-end">
-          <div v-if="isWarningDropdownOpen" @click="isWarningDropdownOpen = false" class="fixed inset-0 z-10"></div>
-          
-          <div class="w-full relative z-20">
-            <label class="block text-xs font-bold text-gray-600 mb-1">⚠️ 警示狀態篩選（可複選）</label>
-            <button @click="isWarningDropdownOpen = !isWarningDropdownOpen" type="button" class="w-full border p-2 rounded-lg bg-white border-gray-300 text-left text-xs font-bold flex justify-between items-center focus:ring-2 focus:ring-emerald-400 min-h-[38px]">
-              <div class="flex flex-wrap gap-1 items-center overflow-hidden">
-                <span v-if="selectedWarnings.length === 0" class="text-gray-400 font-normal">顯示全部品項 (選擇警示條件)</span>
-                <template v-else>
-                  <span v-if="selectedWarnings.includes('LOW_STOCK')" class="bg-red-100 text-red-700 px-1.5 py-0.5 rounded text-[11px] font-bold">⚠️ 低數量</span>
-                  <span v-if="selectedWarnings.includes('EXP_6M')" class="bg-yellow-100 text-yellow-800 px-1.5 py-0.5 rounded text-[11px] font-bold">🟡 6個月內</span>
-                  <span v-if="selectedWarnings.includes('EXP_3M')" class="bg-orange-100 text-orange-800 px-1.5 py-0.5 rounded text-[11px] font-bold">🟠 3個月內</span>
-                  <span v-if="selectedWarnings.includes('EXPIRED')" class="bg-red-500 text-white px-1.5 py-0.5 rounded text-[11px] font-bold">🔴 已過期</span>
-                </template>
-              </div>
-              <span class="ml-2 text-gray-400 text-xs">▾</span>
-            </button>
-
-            <div v-if="isWarningDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-xl p-2 space-y-1 z-30">
-              <label class="flex items-center gap-2 p-1.5 hover:bg-amber-50 rounded cursor-pointer text-xs font-bold text-gray-700">
-                <input type="checkbox" value="LOW_STOCK" v-model="selectedWarnings" class="w-4 h-4 text-emerald-600 rounded">
-                <span>⚠️ 低數量提醒 (≤ 5)</span>
-              </label>
-              <label class="flex items-center gap-2 p-1.5 hover:bg-amber-50 rounded cursor-pointer text-xs font-bold text-gray-700">
-                <input type="checkbox" value="EXP_6M" v-model="selectedWarnings" class="w-4 h-4 text-emerald-600 rounded">
-                <span>🟡 效期半年內 (180天內)</span>
-              </label>
-              <label class="flex items-center gap-2 p-1.5 hover:bg-amber-50 rounded cursor-pointer text-xs font-bold text-gray-700">
-                <input type="checkbox" value="EXP_3M" v-model="selectedWarnings" class="w-4 h-4 text-emerald-600 rounded">
-                <span>🟠 效期 3 個月內 (90天內)</span>
-              </label>
-              <label class="flex items-center gap-2 p-1.5 hover:bg-amber-50 rounded cursor-pointer text-xs font-bold text-gray-700">
-                <input type="checkbox" value="EXPIRED" v-model="selectedWarnings" class="w-4 h-4 text-emerald-600 rounded">
-                <span>🔴 已過期</span>
-              </label>
-              
-              <div class="border-t pt-1.5 mt-1 flex justify-between items-center text-[11px] px-1">
-                <span class="text-gray-400">已選 {{ selectedWarnings.length }} 項</span>
-                <button @click="selectedWarnings = []" type="button" class="text-rose-600 hover:text-rose-800 font-bold">一鍵重置</button>
-              </div>
-            </div>
-          </div>
-        </div>
-
       </div>
+    </header>
 
-      <div class="flex justify-between items-center mb-4 text-sm text-gray-600 font-medium">
-        <span>顯示品項：<strong class="text-emerald-700">{{ filteredInventory.length }}</strong> / {{ rawHerbData.length }} 項</span>
-        <button @click="fetchLogs" class="text-xs bg-slate-200 hover:bg-slate-300 px-3 py-1.5 rounded transition">🔄 重新同步雲端資料</button>
-      </div>
-
-      <div class="overflow-x-auto border rounded-lg">
-        <table class="w-full text-left border-collapse">
-          <thead>
-            <tr class="bg-slate-100 text-slate-700 text-sm border-b">
-              <th class="p-2.5 w-20 text-center">儲位</th>
-              <th class="p-2.5 w-48">藥材名稱 / 別稱</th>
-              <th class="p-2.5 w-32 text-right">當前庫存</th>
-              <th class="p-2.5 text-center">有效期限與批次（🟡半年內到期）</th>
-              <th class="p-2.5 w-24 text-center">狀態</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-200 text-sm">
-            <tr v-for="item in filteredInventory" :key="item.location + item.name" class="hover:bg-slate-50 transition">
-              <td class="p-2.5 text-center font-mono font-bold text-slate-600 bg-slate-50/50">{{ item.location }}</td>
-              <td class="p-2.5">
-                <div class="font-bold text-gray-900 leading-tight text-base">{{ item.name }}</div>
-                <div v-if="item.alias" class="text-[11px] text-gray-400 leading-tight mt-0.5">({{ item.alias }})</div>
-              </td>
-              <td class="p-2.5 text-right font-mono font-bold text-base" :class="item.currentQty <= 5 ? 'text-red-600' : 'text-slate-800'">
-                {{ item.currentQty }} <span class="text-xs text-gray-400 font-normal">件</span>
-              </td>
-              <td class="p-2.5 text-center font-mono">
-                <div v-if="item.expList && item.expList.length > 0" class="flex flex-wrap justify-center gap-1.5">
-                  <span v-for="exp in item.expList" :key="exp.rawDate" :class="getExpStatusClass(exp.rawDate)" class="px-2.5 py-1 rounded-md font-bold text-sm inline-block transition-all">
-                    {{ exp.formattedText }}
-                  </span>
-                </div>
-                <span v-else class="text-gray-300">-</span>
-              </td>
-              <td class="p-2.5 text-center">
-                <span v-if="item.currentQty <= 5" class="bg-red-100 text-red-700 text-xs px-2.5 py-1 rounded-full font-bold">⚠️ 低庫存</span>
-                <span v-else class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">正常</span>
-              </td>
-            </tr>
-            <tr v-if="filteredInventory.length === 0">
-              <td colspan="5" class="p-8 text-center text-gray-400">查無符合條件的藥材資料</td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <!-- TAB 2: 庫存異動登記 -->
-    <div v-if="currentTab === 'log'" class="bg-white p-6 rounded-2xl shadow-sm border border-slate-200">
+    <div class="max-w-7xl mx-auto px-3 md:px-6">
       
-      <!-- AI 貨單辨識區塊 -->
-      <div class="mb-6 p-4 bg-indigo-50 border border-indigo-200 rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
-        <div>
-          <h3 class="font-bold text-indigo-900 flex items-center gap-1.5 text-base">
-            ✨ AI 貨單/標籤自動辨識（自動對照同義詞/別名）
-          </h3>
-          <p class="text-xs text-indigo-700 mt-1">上傳或拍照進貨單，AI 會自動將別名（如「久白」）轉換為系統名稱（如「薤白」）並帶入！</p>
-        </div>
-        <div>
-          <label class="cursor-pointer bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-4 py-2.5 rounded-lg shadow transition flex items-center gap-2 text-sm">
-            <span v-if="analyzing">🌀 AI 辨識與比對中...</span>
-            <span v-else>📷 上傳/拍照進貨單</span>
-            <input type="file" accept="image/*" @change="handleImageUpload" :disabled="analyzing" class="hidden">
-          </label>
-        </div>
+      <!-- 頂部頁籤 -->
+      <div class="flex border-b border-[#E5DEC9] mb-6 bg-white rounded-t-2xl shadow-sm overflow-hidden">
+        <button @click="currentTab = 'overview'" :class="['px-6 py-3.5 font-bold transition-all text-sm md:text-base', currentTab === 'overview' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
+          📦 庫存總覽與查詢
+        </button>
+        <button @click="currentTab = 'log'" :class="['px-6 py-3.5 font-bold transition-all text-sm md:text-base', currentTab === 'log' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
+          📝 庫存異動登記（進/出/盤點）
+        </button>
+        <button @click="currentTab = 'history'; fetchLogs()" :class="['px-6 py-3.5 font-bold transition-all flex items-center gap-2 text-sm md:text-base', currentTab === 'history' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
+          📜 歷史異動明細
+          <span v-if="loading" class="animate-spin text-xs">🌀</span>
+        </button>
       </div>
 
-      <!-- 頂部參數設定列 -->
-      <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">📅 異動日期</label>
-          <input type="date" v-model="logFormHeader.date" class="w-full border rounded-lg p-2 text-sm bg-white font-medium text-gray-700">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">🏷️ 異動類型</label>
-          <select v-model="logFormHeader.type" class="w-full border rounded-lg p-2 text-sm bg-white font-bold" :class="{
-            'text-emerald-600': logFormHeader.type === '進貨',
-            'text-rose-600': logFormHeader.type === '出庫',
-            'text-amber-600': logFormHeader.type === '盤點'
-          }">
-            <option value="進貨">➕ 進貨 (庫存增加)</option>
-            <option value="出庫">➖ 出庫 (庫存減少)</option>
-            <option value="盤點">⚖️ 盤點 (覆蓋現有庫存)</option>
-          </select>
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">👤 經手人</label>
-          <input type="text" v-model="logFormHeader.operator" placeholder="請輸入姓名" class="w-full border rounded-lg p-2 text-sm bg-white">
-        </div>
-        <div>
-          <label class="block text-xs font-bold text-gray-600 mb-1">📝 備註 / 原因</label>
-          <input type="text" v-model="logFormHeader.note" placeholder="如：廠商補貨、調劑損耗" class="w-full border rounded-lg p-2 text-sm bg-white">
-        </div>
-      </div>
-
-      <!-- 搜尋與藥材卡片區塊 -->
-      <div class="border rounded-xl p-4 bg-gray-50/50">
-        
-        <div v-if="hasRecognizedItems" class="mb-4 p-3 bg-indigo-100/70 border border-indigo-300 rounded-lg flex flex-col sm:flex-row items-center justify-between gap-2">
-          <div class="text-xs font-bold text-indigo-900 flex items-center gap-1.5">
-            🔍 AI 已成功轉換並帶入資料！目前開啟核對模式（共 {{ recognizedCount }} 項）
+      <!-- TAB 1: 庫存總覽 -->
+      <div v-if="currentTab === 'overview'" class="bg-white p-5 rounded-2xl shadow-sm border border-[#E5DEC9]">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6 bg-[#FBF9F5] p-4 rounded-xl border border-[#EBE3D5]">
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">🔍 關鍵字搜尋（藥名/別稱/儲位）</label>
+            <input type="text" v-model="searchKeyword" placeholder="如：薤白、久白、1-1..." class="border border-[#D8C9B9] p-2 rounded-lg w-full bg-white focus:ring-2 focus:ring-[#8C6D53] outline-none text-sm">
           </div>
-          <button @click="onlyRecognized = !onlyRecognized" class="text-xs bg-indigo-600 hover:bg-indigo-700 text-white font-bold px-3 py-1.5 rounded transition">
-            {{ onlyRecognized ? '🌐 切換為：顯示全部藥材' : '🎯 切換為：僅顯示辨識項目' }}
-          </button>
-        </div>
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">🗄️ 區域/櫃位篩選</label>
+            <select v-model="selectedCabinet" class="border border-[#D8C9B9] p-2 rounded-lg w-full bg-white focus:ring-2 focus:ring-[#8C6D53] outline-none text-sm font-medium">
+              <option value="ALL">🌐 全部櫃位 (所有藥材)</option>
+              <optgroup label="📦 常規藥櫃 (1~17櫃)">
+                <option v-for="n in 17" :key="n" :value="n.toString()">第 {{ n }} 櫃</option>
+              </optgroup>
+              <optgroup label="🌿 特殊儲位">
+                <option value="G">G 櫃（草類）</option>
+                <option value="R">R 櫃（冷藏類）</option>
+              </optgroup>
+            </select>
+          </div>
 
-        <div class="mb-4">
-          <label class="block text-xs font-bold text-gray-600 mb-1">🔍 搜尋要異動的藥材</label>
-          <input type="text" v-model="cardSearchKeyword" placeholder="輸入藥名或儲位..." class="w-full border rounded-lg p-2.5 bg-white text-sm focus:ring-2 focus:ring-emerald-400">
-        </div>
-
-        <div class="max-h-[550px] overflow-y-auto pr-1">
-          <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+          <!-- 警示狀態複選下拉選單 -->
+          <div class="relative flex items-end">
+            <div v-if="isWarningDropdownOpen" @click="isWarningDropdownOpen = false" class="fixed inset-0 z-10"></div>
             
-            <div v-for="item in cardFilteredInventory" :key="item.location + item.name" 
-     class="bg-white border rounded-xl p-3 shadow-sm flex flex-col justify-between hover:border-emerald-300 transition" 
-     :class="{'border-indigo-400 bg-indigo-50/20': getItemTotalQty(item.location + '|' + item.name) > 0}">
-  
-  <div class="flex items-center justify-between mb-2">
-    <div>
-      <div class="text-xs font-mono font-bold text-gray-400">{{ item.location }}</div>
-      <div class="font-bold text-slate-800 text-base leading-tight">{{ item.name }}</div>
-      <div class="text-[11px] text-gray-400 mt-0.5">目前庫存：{{ item.currentQty }}</div>
-    </div>
+            <div class="w-full relative z-20">
+              <label class="block text-xs font-bold text-[#5C4033] mb-1">⚠️ 警示狀態篩選（可複選）</label>
+              <button @click="isWarningDropdownOpen = !isWarningDropdownOpen" type="button" class="w-full border border-[#D8C9B9] p-2 rounded-lg bg-white text-left text-xs font-bold flex justify-between items-center focus:ring-2 focus:ring-[#8C6D53] min-h-[38px]">
+                <div class="flex flex-wrap gap-1 items-center overflow-hidden">
+                  <span v-if="selectedWarnings.length === 0" class="text-stone-400 font-normal">顯示全部品項 (選擇警示條件)</span>
+                  <template v-else>
+                    <span v-if="selectedWarnings.includes('LOW_STOCK')" class="bg-rose-100 text-rose-800 px-1.5 py-0.5 rounded text-[11px] font-bold">⚠️ 低數量</span>
+                    <span v-if="selectedWarnings.includes('EXP_6M')" class="bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded text-[11px] font-bold">🟡 6個月內</span>
+                    <span v-if="selectedWarnings.includes('EXP_3M')" class="bg-orange-100 text-orange-900 px-1.5 py-0.5 rounded text-[11px] font-bold">🟠 3個月內</span>
+                    <span v-if="selectedWarnings.includes('EXPIRED')" class="bg-rose-600 text-white px-1.5 py-0.5 rounded text-[11px] font-bold">🔴 已過期</span>
+                  </template>
+                </div>
+                <span class="ml-2 text-stone-400 text-xs">▾</span>
+              </button>
 
-    <!-- 根據異動類型動態顯示按鈕文字 -->
-    <button @click="addBatchRow(item.location + '|' + item.name)" class="text-[11px] bg-slate-100 hover:bg-indigo-100 text-indigo-700 font-bold px-2 py-1 rounded border border-indigo-200 transition">
-      {{ logFormHeader.type === '出庫' ? '+ 扣庫批次' : '+ 新增效期' }}
-    </button>
-  </div>
-
-  <div class="space-y-2 pt-2 border-t border-dashed border-gray-200">
-    <div v-for="(row, idx) in getItemBatches(item.location + '|' + item.name)" :key="idx" class="flex items-center gap-2 bg-slate-50/70 p-1.5 rounded-lg border border-gray-100">
-      
-      <!-- 扣庫/進貨數量 -->
-      <div class="w-20">
-        <input type="number" min="0" placeholder="數量" v-model.number="row.qty" class="w-full border rounded p-1 text-center font-bold text-slate-800 focus:ring-1 focus:ring-emerald-400 text-sm">
-      </div>
-
-      <!-- 效期 / 批號選擇器 -->
-      <div class="flex-1">
-        <!-- 【出庫時】：顯示目前現有批號的下拉選單 -->
-        <select v-if="logFormHeader.type === '出庫'" v-model="row.expDate" class="w-full border rounded p-1 text-xs bg-white text-gray-700 focus:ring-1 focus:ring-emerald-400 font-medium">
-          <option value="">-- 請選擇要扣除的批號 --</option>
-          <option v-for="exp in item.expList" :key="exp.rawDate" :value="exp.rawDate">
-            📅 {{ exp.formattedText }}
-          </option>
-          <option value="未填效期">未填效期</option>
-        </select>
-
-        <!-- 【進貨/盤點時】：保持原有的日期選擇器 -->
-        <input v-else type="date" v-model="row.expDate" class="w-full border rounded p-1 text-xs bg-white text-gray-700 focus:ring-1 focus:ring-emerald-400">
-      </div>
-
-      <!-- 刪除多餘批次按鈕 -->
-      <button v-if="getItemBatches(item.location + '|' + item.name).length > 1" @click="removeBatchRow(item.location + '|' + item.name, idx)" class="text-gray-400 hover:text-red-500 font-bold px-1 text-xs">
-        ❌
-      </button>
-
-    </div>
-  </div>
-
-</div>
-
-            <div v-if="cardFilteredInventory.length === 0" class="col-span-full text-center py-8 text-gray-400">
-              查無符合條件的藥材項目
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <button @click="submitBatchLogs" :disabled="submitting" class="w-full mt-6 bg-emerald-600 hover:bg-emerald-700 disabled:bg-gray-400 text-white font-bold py-3.5 rounded-xl shadow-md transition text-base">
-        {{ submitting ? '資料發送中...' : '送出異動單（同步至雲端）' }}
-      </button>
-    </div>
-
-    <!-- TAB 3: 歷史異動明細 -->
-    <div v-if="currentTab === 'history'" class="bg-[#fffdf9] p-6 rounded-2xl shadow-md border-2 border-amber-900/20 relative">
-      
-      <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b-2 border-dashed border-amber-900/20">
-        <div>
-          <h2 class="text-2xl font-bold text-amber-900 flex items-center gap-2">
-            📖 異動明細紀錄
-          </h2>
-          <p class="text-xs text-amber-800/70 mt-0.5">依照日期精簡檢視各品項進出狀況（共 {{ dbLogs.length }} 筆紀錄）</p>
-        </div>
-
-        <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
-          <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-900/20 shadow-sm">
-            <span class="text-xs font-bold text-amber-900">選單：</span>
-            <select v-model="historyFilterType" class="text-sm bg-transparent font-bold text-amber-900 outline-none cursor-pointer">
-              <option value="ALL">全部類型 (進/出/盤)</option>
-              <option value="進貨">進貨</option>
-              <option value="出庫">出庫 / 出貨</option>
-              <option value="盤點">盤點 / 盤點修正</option>
-            </select>
-          </div>
-
-          <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-amber-900/20 shadow-sm">
-            <span class="text-xs font-bold text-amber-900">時間：</span>
-            <select v-model="historyFilterDate" class="text-sm bg-transparent font-bold text-amber-900 outline-none cursor-pointer">
-              <option value="ALL">全部日期</option>
-              <option v-for="d in availableDates" :key="d" :value="d">{{ d }}</option>
-            </select>
-          </div>
-        </div>
-      </div>
-
-      <div class="space-y-6">
-        <div v-for="(group, dateStr) in groupedLogs" :key="dateStr" class="relative">
-          
-          <div class="inline-block bg-amber-800 text-amber-50 px-4 py-1 rounded-full text-lg font-bold font-mono shadow-sm mb-3">
-            📅 {{ dateStr }}
-          </div>
-
-          <div class="bg-white border-2 border-amber-900/30 rounded-2xl p-4 shadow-sm space-y-2">
-            <div v-for="log in group" :key="log.id" class="flex flex-wrap items-center p-2.5 hover:bg-amber-50/60 rounded-xl border border-transparent hover:border-amber-900/10 transition gap-x-6 gap-y-2">
-              
-              <div class="flex items-center gap-3">
-                <span :class="{
-                  'bg-emerald-100 text-emerald-800 border-emerald-300': log.type === '進貨',
-                  'bg-rose-100 text-rose-800 border-rose-300': log.type === '出庫' || log.type === '出貨',
-                  'bg-amber-100 text-amber-800 border-amber-300': log.type === '盤點' || log.type === '盤點修正'
-                }" class="px-2 py-0.5 rounded-md text-xs font-bold border">
-                  {{ log.type }}
-                </span>
+              <div v-if="isWarningDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white border border-[#E5DEC9] rounded-xl shadow-xl p-2 space-y-1 z-30">
+                <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
+                  <input type="checkbox" value="LOW_STOCK" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
+                  <span>⚠️ 低數量提醒 (≤ 5)</span>
+                </label>
+                <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
+                  <input type="checkbox" value="EXP_6M" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
+                  <span>🟡 效期半年內 (180天內)</span>
+                </label>
+                <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
+                  <input type="checkbox" value="EXP_3M" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
+                  <span>🟠 效期 3 個月內 (90天內)</span>
+                </label>
+                <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
+                  <input type="checkbox" value="EXPIRED" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
+                  <span>🔴 已過期</span>
+                </label>
                 
-                <span class="font-mono text-xs font-bold text-amber-800 bg-amber-100/60 px-2 py-0.5 rounded">[{{ log.location }}]</span>
-                
-                <div class="flex items-center gap-2">
-                  <span class="font-bold text-slate-800 text-base">{{ log.name }}</span>
-                  <span class="font-mono font-bold text-sm px-2 py-0.5 rounded" :class="{
-                    'text-emerald-700 bg-emerald-50': log.type === '進貨',
-                    'text-rose-700 bg-rose-50': log.type === '出庫' || log.type === '出貨',
-                    'text-amber-700 bg-amber-50': log.type === '盤點' || log.type === '盤點修正'
-                  }">
-                    {{ log.type === '進貨' ? '+' : ((log.type === '出庫' || log.type === '出貨') ? '-' : '') }}{{ log.qty }} 件
-                  </span>
+                <div class="border-t border-[#E5DEC9] pt-1.5 mt-1 flex justify-between items-center text-[11px] px-1">
+                  <span class="text-stone-400">已選 {{ selectedWarnings.length }} 項</span>
+                  <button @click="selectedWarnings = []" type="button" class="text-rose-600 hover:text-rose-800 font-bold">一鍵重置</button>
                 </div>
               </div>
-
-              <div class="flex items-center gap-3">
-                <span v-if="log.expDate" class="text-xs text-slate-600 font-mono bg-slate-100 px-2 py-1 rounded">
-                  效期: {{ log.expDate }}
-                </span>
-
-                <span class="text-xs text-slate-500 bg-slate-100 px-2 py-1 rounded-lg">
-                  {{ log.operator ? `👤 ${log.operator}` : '' }} {{ log.note ? `| ${log.note}` : '' }}
-                </span>
-
-                <button @click="deleteLog(log.id)" class="text-xs text-rose-500 hover:text-rose-700 font-bold px-2 py-1 hover:bg-rose-50 rounded transition">
-                  刪除
-                </button>
-              </div>
-
             </div>
           </div>
 
         </div>
 
-        <div v-if="Object.keys(groupedLogs).length === 0" class="text-center py-12 text-amber-900/40 font-bold text-base">
-          沒有找到符合條件的歷史異動紀錄
+        <div class="flex justify-between items-center mb-4 text-sm text-stone-600 font-medium">
+          <span>顯示品項：<strong class="text-[#7A5C43]">{{ filteredInventory.length }}</strong> / {{ rawHerbData.length }} 項</span>
+          <button @click="fetchLogs" class="text-xs bg-[#F4EFEA] hover:bg-[#E8DFD5] text-[#5C4033] border border-[#D8C9B9] px-3 py-1.5 rounded-lg transition font-bold">🔄 重新同步雲端資料</button>
+        </div>
+
+        <div class="overflow-x-auto border border-[#E5DEC9] rounded-xl">
+          <table class="w-full text-left border-collapse">
+            <thead>
+              <tr class="bg-[#F7F2EB] text-[#5C4033] text-sm border-b border-[#E5DEC9]">
+                <th class="p-3 w-20 text-center font-bold">儲位</th>
+                <th class="p-3 w-48 font-bold">藥材名稱 / 別稱</th>
+                <th class="p-3 w-32 text-right font-bold">當前庫存</th>
+                <th class="p-3 text-center font-bold">有效期限與批次</th>
+                <th class="p-3 w-24 text-center font-bold">狀態</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-[#E5DEC9] text-sm">
+              <tr v-for="item in filteredInventory" :key="item.location + item.name" class="hover:bg-[#FAF7F2] transition">
+                <td class="p-2.5 text-center font-mono font-bold text-[#7A5C43] bg-[#FBF9F5]">{{ item.location }}</td>
+                <td class="p-2.5">
+                  <div class="font-bold text-[#3D312E] leading-tight text-base">{{ item.name }}</div>
+                  <div v-if="item.alias" class="text-[11px] text-stone-400 leading-tight mt-0.5">({{ item.alias }})</div>
+                </td>
+                <td class="p-2.5 text-right font-mono font-bold text-base" :class="item.currentQty <= 5 ? 'text-rose-600' : 'text-[#3D312E]'">
+                  {{ item.currentQty }} <span class="text-xs text-stone-400 font-normal">件</span>
+                </td>
+                <td class="p-2.5 text-center font-mono">
+                  <div v-if="item.expList && item.expList.length > 0" class="flex flex-wrap justify-center gap-1.5">
+                    <span v-for="exp in item.expList" :key="exp.rawDate" :class="getExpStatusClass(exp.rawDate)" class="px-2.5 py-1 rounded-md font-bold text-sm inline-block transition-all">
+                      {{ exp.formattedText }}
+                    </span>
+                  </div>
+                  <span v-else class="text-stone-300">-</span>
+                </td>
+                <td class="p-2.5 text-center">
+                  <span v-if="item.currentQty <= 5" class="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">⚠️ 低庫存</span>
+                  <span v-else class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">正常</span>
+                </td>
+              </tr>
+              <tr v-if="filteredInventory.length === 0">
+                <td colspan="5" class="p-8 text-center text-stone-400">查無符合條件的藥材資料</td>
+              </tr>
+            </tbody>
+          </table>
         </div>
       </div>
 
-    </div>
+      <!-- TAB 2: 庫存異動登記 -->
+      <div v-if="currentTab === 'log'" class="bg-white p-6 rounded-2xl shadow-sm border border-[#E5DEC9]">
+        
+        <!-- AI 貨單辨識區塊 -->
+        <div class="mb-6 p-4 bg-[#F5EFE6] border border-[#D8C9B9] rounded-xl flex flex-col md:flex-row items-center justify-between gap-4">
+          <div>
+            <h3 class="font-bold text-[#5C4033] flex items-center gap-1.5 text-base">
+              ✨ AI 貨單/標籤自動辨識（自動對照同義詞/別名）
+            </h3>
+            <p class="text-xs text-[#7A5C43] mt-1">上傳或拍照進貨單，AI 會自動將別名（如「久白」）轉換為系統名稱（如「薤白」）並帶入！</p>
+          </div>
+          <div>
+            <label class="cursor-pointer bg-[#7A5C43] hover:bg-[#634833] text-white font-bold px-4 py-2.5 rounded-xl shadow transition flex items-center gap-2 text-sm">
+              <span v-if="analyzing">🌀 AI 辨識與比對中...</span>
+              <span v-else>📷 上傳/拍照進貨單</span>
+              <input type="file" accept="image/*" @change="handleImageUpload" :disabled="analyzing" class="hidden">
+            </label>
+          </div>
+        </div>
 
+        <!-- 頂部參數設定列 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4 mb-6 p-4 bg-[#FBF9F5] rounded-xl border border-[#EBE3D5]">
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">📅 異動日期</label>
+            <input type="date" v-model="logFormHeader.date" class="w-full border border-[#D8C9B9] rounded-lg p-2 text-sm bg-white font-medium text-stone-700">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">🏷️ 異動類型</label>
+            <select v-model="logFormHeader.type" class="w-full border border-[#D8C9B9] rounded-lg p-2 text-sm bg-white font-bold" :class="{
+              'text-emerald-700': logFormHeader.type === '進貨',
+              'text-rose-700': logFormHeader.type === '出庫',
+              'text-amber-800': logFormHeader.type === '盤點'
+            }">
+              <option value="進貨">➕ 進貨 (庫存增加)</option>
+              <option value="出庫">➖ 出庫 (庫存減少)</option>
+              <option value="盤點">⚖️ 盤點 (覆蓋現有庫存)</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">👤 經手人</label>
+            <input type="text" v-model="logFormHeader.operator" placeholder="請輸入姓名" class="w-full border border-[#D8C9B9] rounded-lg p-2 text-sm bg-white">
+          </div>
+          <div>
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">📝 備註 / 原因</label>
+            <input type="text" v-model="logFormHeader.note" placeholder="如：廠商補貨、調劑損耗" class="w-full border border-[#D8C9B9] rounded-lg p-2 text-sm bg-white">
+          </div>
+        </div>
+
+        <!-- 搜尋與藥材卡片區塊 -->
+        <div class="border border-[#E5DEC9] rounded-xl p-4 bg-[#FBF9F5]">
+          
+          <div v-if="hasRecognizedItems" class="mb-4 p-3 bg-[#EFE8DC] border border-[#D8C9B9] rounded-lg flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div class="text-xs font-bold text-[#5C4033] flex items-center gap-1.5">
+              🔍 AI 已成功轉換並帶入資料！目前開啟核對模式（共 {{ recognizedCount }} 項）
+            </div>
+            <button @click="onlyRecognized = !onlyRecognized" class="text-xs bg-[#7A5C43] hover:bg-[#634833] text-white font-bold px-3 py-1.5 rounded-lg transition">
+              {{ onlyRecognized ? '🌐 切換為：顯示全部藥材' : '🎯 切換為：僅顯示辨識項目' }}
+            </button>
+          </div>
+
+          <div class="mb-4">
+            <label class="block text-xs font-bold text-[#5C4033] mb-1">🔍 搜尋要異動的藥材</label>
+            <input type="text" v-model="cardSearchKeyword" placeholder="輸入藥名或儲位..." class="w-full border border-[#D8C9B9] rounded-lg p-2.5 bg-white text-sm focus:ring-2 focus:ring-[#8C6D53]">
+          </div>
+
+          <div class="max-h-[550px] overflow-y-auto pr-1">
+            <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
+              
+              <div v-for="item in cardFilteredInventory" :key="item.location + item.name" 
+                   class="bg-white border border-[#E5DEC9] rounded-xl p-3 shadow-sm flex flex-col justify-between hover:border-[#8C6D53] transition" 
+                   :class="{'border-[#8C6D53] bg-[#FDFBF7]': getItemTotalQty(item.location + '|' + item.name) > 0}">
+                
+                <div class="flex items-center justify-between mb-2">
+                  <div>
+                    <div class="text-xs font-mono font-bold text-stone-400">{{ item.location }}</div>
+                    <div class="font-bold text-[#3D312E] text-base leading-tight">{{ item.name }}</div>
+                    <div class="text-[11px] text-stone-400 mt-0.5">目前庫存：{{ item.currentQty }}</div>
+                  </div>
+
+                  <button @click="addBatchRow(item.location + '|' + item.name)" class="text-[11px] bg-[#F4EFEA] hover:bg-[#E8DFD5] text-[#5C4033] font-bold px-2 py-1 rounded border border-[#D8C9B9] transition">
+                    {{ logFormHeader.type === '出庫' ? '+ 扣庫批次' : '+ 新增效期' }}
+                  </button>
+                </div>
+
+                <div class="space-y-2 pt-2 border-t border-dashed border-[#E5DEC9]">
+                  <div v-for="(row, idx) in getItemBatches(item.location + '|' + item.name)" :key="idx" class="flex items-center gap-2 bg-[#FBF9F5] p-1.5 rounded-lg border border-[#EBE3D5]">
+                    
+                    <div class="w-20">
+                      <input type="number" min="0" placeholder="數量" v-model.number="row.qty" class="w-full border border-[#D8C9B9] rounded p-1 text-center font-bold text-[#3D312E] focus:ring-1 focus:ring-[#8C6D53] text-sm">
+                    </div>
+
+                    <div class="flex-1">
+                      <select v-if="logFormHeader.type === '出庫'" v-model="row.expDate" class="w-full border border-[#D8C9B9] rounded p-1 text-xs bg-white text-stone-700 focus:ring-1 focus:ring-[#8C6D53] font-medium">
+                        <option value="">-- 請選擇要扣除的批號 --</option>
+                        <option v-for="exp in item.expList" :key="exp.rawDate" :value="exp.rawDate">
+                          📅 {{ exp.formattedText }}
+                        </option>
+                        <option value="未填效期">未填效期</option>
+                      </select>
+
+                      <input v-else type="date" v-model="row.expDate" class="w-full border border-[#D8C9B9] rounded p-1 text-xs bg-white text-stone-700 focus:ring-1 focus:ring-[#8C6D53]">
+                    </div>
+
+                    <button v-if="getItemBatches(item.location + '|' + item.name).length > 1" @click="removeBatchRow(item.location + '|' + item.name, idx)" class="text-stone-400 hover:text-rose-600 font-bold px-1 text-xs">
+                      ❌
+                    </button>
+
+                  </div>
+                </div>
+
+              </div>
+
+              <div v-if="cardFilteredInventory.length === 0" class="col-span-full text-center py-8 text-stone-400">
+                查無符合條件的藥材項目
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <button @click="submitBatchLogs" :disabled="submitting" class="w-full mt-6 bg-[#6E5034] hover:bg-[#583E26] disabled:bg-stone-300 text-white font-bold py-3.5 rounded-xl shadow-md transition text-base">
+          {{ submitting ? '資料發送中...' : '送出異動單（同步至雲端）' }}
+        </button>
+      </div>
+
+      <!-- TAB 3: 歷史異動明細 -->
+      <div v-if="currentTab === 'history'" class="bg-[#FDFBF7] p-6 rounded-2xl shadow-sm border border-[#E5DEC9] relative">
+        
+        <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 mb-6 pb-4 border-b-2 border-dashed border-[#E5DEC9]">
+          <div>
+            <h2 class="text-2xl font-bold text-[#4A3B32] flex items-center gap-2">
+              📖 異動明細紀錄
+            </h2>
+            <p class="text-xs text-[#7A5C43] mt-0.5">依照日期精簡檢視各品項進出狀況（共 {{ dbLogs.length }} 筆紀錄）</p>
+          </div>
+
+          <div class="flex flex-wrap items-center gap-3 w-full md:w-auto">
+            <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-[#D8C9B9] shadow-sm">
+              <span class="text-xs font-bold text-[#5C4033]">選單：</span>
+              <select v-model="historyFilterType" class="text-sm bg-transparent font-bold text-[#4A3B32] outline-none cursor-pointer">
+                <option value="ALL">全部類型 (進/出/盤)</option>
+                <option value="進貨">進貨</option>
+                <option value="出庫">出庫 / 出貨</option>
+                <option value="盤點">盤點 / 盤點修正</option>
+              </select>
+            </div>
+
+            <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-[#D8C9B9] shadow-sm">
+              <span class="text-xs font-bold text-[#5C4033]">時間：</span>
+              <select v-model="historyFilterDate" class="text-sm bg-transparent font-bold text-[#4A3B32] outline-none cursor-pointer">
+                <option value="ALL">全部日期</option>
+                <option v-for="d in availableDates" :key="d" :value="d">{{ d }}</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-6">
+          <div v-for="(group, dateStr) in groupedLogs" :key="dateStr" class="relative">
+            
+            <div class="inline-block bg-[#6E5034] text-white px-4 py-1 rounded-full text-base font-bold font-mono shadow-sm mb-3">
+              📅 {{ dateStr }}
+            </div>
+
+            <div class="bg-white border border-[#E5DEC9] rounded-2xl p-4 shadow-sm space-y-2">
+              <div v-for="log in group" :key="log.id" class="flex flex-wrap items-center p-2.5 hover:bg-[#FDFBF7] rounded-xl border border-transparent hover:border-[#E5DEC9] transition gap-x-6 gap-y-2">
+                
+                <div class="flex items-center gap-3">
+                  <span :class="{
+                    'bg-emerald-100 text-emerald-800 border-emerald-200': log.type === '進貨',
+                    'bg-rose-100 text-rose-800 border-rose-200': log.type === '出庫' || log.type === '出貨',
+                    'bg-amber-100 text-amber-900 border-amber-200': log.type === '盤點' || log.type === '盤點修正'
+                  }" class="px-2 py-0.5 rounded-md text-xs font-bold border">
+                    {{ log.type }}
+                  </span>
+                  
+                  <span class="font-mono text-xs font-bold text-[#6E5034] bg-[#F7F2EB] px-2 py-0.5 rounded">[{{ log.location }}]</span>
+                  
+                  <div class="flex items-center gap-2">
+                    <span class="font-bold text-[#3D312E] text-base">{{ log.name }}</span>
+                    <span class="font-mono font-bold text-sm px-2 py-0.5 rounded" :class="{
+                      'text-emerald-700 bg-emerald-50': log.type === '進貨',
+                      'text-rose-700 bg-rose-50': log.type === '出庫' || log.type === '出貨',
+                      'text-amber-800 bg-amber-50': log.type === '盤點' || log.type === '盤點修正'
+                    }">
+                      {{ log.type === '進貨' ? '+' : ((log.type === '出庫' || log.type === '出貨') ? '-' : '') }}{{ log.qty }} 件
+                    </span>
+                  </div>
+                </div>
+
+                <div class="flex items-center gap-3">
+                  <span v-if="log.expDate" class="text-xs text-stone-600 font-mono bg-stone-100 px-2 py-1 rounded">
+                    效期: {{ log.expDate }}
+                  </span>
+
+                  <span class="text-xs text-stone-500 bg-stone-100 px-2 py-1 rounded-lg">
+                    {{ log.operator ? `👤 ${log.operator}` : '' }} {{ log.note ? `| ${log.note}` : '' }}
+                  </span>
+
+                  <button @click="deleteLog(log.id)" class="text-xs text-rose-500 hover:text-rose-700 font-bold px-2 py-1 hover:bg-rose-50 rounded transition">
+                    刪除
+                  </button>
+                </div>
+
+              </div>
+            </div>
+
+          </div>
+
+          <div v-if="Object.keys(groupedLogs).length === 0" class="text-center py-12 text-stone-400 font-bold text-base">
+            沒有找到符合條件的歷史異動紀錄
+          </div>
+        </div>
+
+      </div>
+
+    </div>
   </div>
 
   <script>
@@ -708,7 +721,6 @@
       { location: "R-62", name: "全蠍", alias: "" }
     ];
 
-    // 💡 取得在地當前日期 (YYYY-MM-DD)，避開 UTC 時區造成的少一天問題
     const getTodayString = () => {
       const d = new Date();
       const year = d.getFullYear();
@@ -755,7 +767,7 @@
         const isWarningDropdownOpen = ref(false);
 
         const logFormHeader = reactive({
-          date: getTodayString(), // 👈 修正處：使用在地日期
+          date: getTodayString(),
           type: '進貨',
           operator: '',
           note: ''
@@ -864,45 +876,43 @@
                 totalQty += logQty;
                 expBatchMap[rawExp] = Number(((expBatchMap[rawExp] || 0) + logQty).toFixed(4));
                 currentStocktakeBatch = null;
-             } else if (log.type === '出庫' || log.type === '出貨') {
-  totalQty -= logQty;
-  let deductQty = logQty;
+              } else if (log.type === '出庫' || log.type === '出貨') {
+                totalQty -= logQty;
+                let deductQty = logQty;
 
-  // 1. 若紀錄中有指定效期，優先從該效期扣除
-  if (rawExp && expBatchMap[rawExp] !== undefined) {
-    const avail = expBatchMap[rawExp];
-    if (avail >= deductQty) {
-      expBatchMap[rawExp] -= deductQty;
-      deductQty = 0;
-    } else {
-      deductQty -= avail;
-      expBatchMap[rawExp] = 0;
-    }
-  }
+                if (rawExp && expBatchMap[rawExp] !== undefined) {
+                  const avail = expBatchMap[rawExp];
+                  if (avail >= deductQty) {
+                    expBatchMap[rawExp] -= deductQty;
+                    deductQty = 0;
+                  } else {
+                    deductQty -= avail;
+                    expBatchMap[rawExp] = 0;
+                  }
+                }
 
-  // 2. 若指定效期扣不夠（或未指定效期），剩餘數量才按 FIFO 自動從最早效期補扣
-  if (deductQty > 0) {
-    const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
-      if (a === '未填效期') return 1;
-      if (b === '未填效期') return -1;
-      return new Date(a) - new Date(b);
-    });
+                if (deductQty > 0) {
+                  const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
+                    if (a === '未填效期') return 1;
+                    if (b === '未填效期') return -1;
+                    return new Date(a) - new Date(b);
+                  });
 
-    for (const expKey of sortedExpKeys) {
-      if (deductQty <= 0) break;
-      const currentExpQty = expBatchMap[expKey];
-      if (currentExpQty > 0) {
-        if (currentExpQty >= deductQty) {
-          expBatchMap[expKey] -= deductQty;
-          deductQty = 0;
-        } else {
-          deductQty -= currentExpQty;
-          expBatchMap[expKey] = 0;
-        }
-      }
-    }
-  }
-  currentStocktakeBatch = null;
+                  for (const expKey of sortedExpKeys) {
+                    if (deductQty <= 0) break;
+                    const currentExpQty = expBatchMap[expKey];
+                    if (currentExpQty > 0) {
+                      if (currentExpQty >= deductQty) {
+                        expBatchMap[expKey] -= deductQty;
+                        deductQty = 0;
+                      } else {
+                        deductQty -= currentExpQty;
+                        expBatchMap[expKey] = 0;
+                      }
+                    }
+                  }
+                }
+                currentStocktakeBatch = null;
               } else if (log.type === '盤點' || log.type === '盤點修正') {
                 const sessionKey = submissionTime ? `${logDate}_${submissionTime}` : `${logDate}_${log.operator || ''}_stocktake`;
 
@@ -918,7 +928,6 @@
               }
             });
 
-            // 修正總庫存小數點誤差
             totalQty = Number(totalQty.toFixed(4));
 
             const expList = [];
@@ -929,7 +938,6 @@
             });
 
             sortedExpKeys.forEach(expKey => {
-              // 修正點：自動去除小數點多餘的 0，呈現乾淨數值
               const batchQty = Number(expBatchMap[expKey].toFixed(4));
               if (batchQty > 0) {
                 expList.push({
@@ -947,9 +955,10 @@
           });
         });
 
+        /* 修改：黑底 + 依照狀態調整字體顏色與框線顏色 */
         const getExpStatusClass = (expDateStr) => {
           if (!expDateStr || expDateStr === '未填效期') {
-            return 'bg-gray-100 text-gray-600 border border-gray-200';
+            return 'bg-black text-white border border-[#D8C9B9]';
           }
 
           const today = new Date();
@@ -959,18 +968,21 @@
           expDate.setHours(0, 0, 0, 0);
 
           if (isNaN(expDate.getTime())) {
-            return 'bg-gray-100 text-gray-600 border border-gray-200';
+            return 'bg-black text-white border border-[#D8C9B9]';
           }
 
           const sixMonthsLater = new Date(today);
           sixMonthsLater.setMonth(today.getMonth() + 6);
 
           if (expDate < today) {
-            return 'bg-red-500 text-white border border-red-600 font-bold shadow-sm';
+            // 已過期：黑底、紅框、紅字
+            return 'bg-black text-rose-400 border border-rose-600 font-bold shadow-sm';
           } else if (expDate <= sixMonthsLater) {
-            return 'bg-yellow-300 text-yellow-950 border border-yellow-400 font-bold shadow-sm';
+            // 半年內：黑底、黃框、黃字
+            return 'bg-black text-amber-400 border border-amber-400 font-bold shadow-sm';
           } else {
-            return 'bg-slate-100 text-slate-700 border border-slate-200';
+            // 正常：黑底、典雅框、白字
+            return 'bg-black text-white border border-[#D8C9B9]';
           }
         };
 
@@ -1199,7 +1211,7 @@
               itemBatchInputs[key] = [{ qty: null, expDate: '' }];
             }
             logFormHeader.note = '';
-            logFormHeader.date = getTodayString(); // 👈 修正處：送出後重置為當日在地日期
+            logFormHeader.date = getTodayString();
             onlyRecognized.value = false;
             
             alert(`成功發送 ${newEntries.length} 筆異動紀錄！`);
