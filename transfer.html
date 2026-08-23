@@ -38,14 +38,11 @@
 <body class="bg-brand-50 min-h-screen p-4 md:p-6 text-brand-800">
   <div id="app" class="max-w-6xl mx-auto">
     
-    <!-- 頂部 Header：品牌 Logo、系統標題列與回首頁按鈕 -->
+    <!-- 頂部 Header：品牌 Logo 圖片、系統標題列與回首頁按鈕 -->
     <header class="bg-white border-b border-brand-200 px-6 py-4 mb-6 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-4">
       <div class="flex items-center space-x-4">
-        <!-- Logo 區域 -->
-        <div class="flex items-baseline space-x-1.5">
-          <span class="text-3xl font-serif-tc font-bold text-brand-700 tracking-wider">風澤</span>
-          <span class="text-[10px] font-medium text-brand-500 tracking-tight border-t border-brand-500 pt-0.5">醫療體系</span>
-        </div>
+        <!-- Logo 圖片區域 -->
+        <img src="LOGO.PNG" alt="風澤醫療體系 Logo" class="h-10 w-auto object-contain">
         <!-- 分隔線 -->
         <div class="h-6 w-[1.5px] bg-gray-300"></div>
         <!-- 系統標題 -->
@@ -143,11 +140,19 @@
           </button>
         </div>
         
-        <!-- 月份搜尋與過濾器 -->
-        <div class="flex items-center gap-2 bg-brand-50 p-2 rounded-lg border border-brand-200">
-          <label class="text-xs font-bold text-brand-700">🔍 查詢月份：</label>
-          <input type="month" v-model="selectedMonth" class="border border-brand-300 p-1 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
-          <button @click="selectedMonth = ''" class="text-xs bg-white hover:bg-brand-100 border border-brand-200 px-2 py-1 rounded-md font-medium text-brand-700">重置（顯示全部）</button>
+        <!-- 月份與單品項複合過濾器 -->
+        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-200 w-full lg:w-auto">
+          <div class="flex items-center gap-2">
+            <label class="text-xs font-bold text-brand-700 shrink-0">📅 查詢月份：</label>
+            <input type="month" v-model="selectedMonth" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
+          </div>
+          <div class="flex items-center gap-2 w-full sm:w-auto">
+            <label class="text-xs font-bold text-brand-700 shrink-0">💊 單品項查詢：</label>
+            <input type="text" v-model="selectedItem" placeholder="輸入品項名稱關鍵字" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400 w-full sm:w-40">
+          </div>
+          <button @click="selectedMonth = ''; selectedItem = ''" class="text-xs bg-white hover:bg-brand-100 border border-brand-200 px-2.5 py-1.5 rounded-md font-medium text-brand-700 shrink-0 transition-colors">
+            重置篩選
+          </button>
         </div>
       </div>
 
@@ -159,9 +164,10 @@
       <template v-else>
         <!-- 每日與院所調撥明細 -->
         <div class="mb-8">
-          <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm">
+          <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm flex-wrap">
             <span>📅 調撥紀錄明細</span>
-            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedMonth">搜尋條件：{{ selectedMonth }}</span>
+            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedMonth">月份：{{ selectedMonth }}</span>
+            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedItem">品項：{{ selectedItem }}</span>
           </h3>
 
           <div v-for="(logs, groupKey) in filteredGroupedLogs" :key="groupKey" class="mb-4 border border-brand-200 rounded-xl p-4 bg-brand-50/40 shadow-2xs">
@@ -184,14 +190,14 @@
               </div>
             </div>
           </div>
-          <div v-if="Object.keys(filteredGroupedLogs).length === 0" class="text-center py-8 text-gray-400 text-sm">此月份尚無雲端調撥紀錄</div>
+          <div v-if="Object.keys(filteredGroupedLogs).length === 0" class="text-center py-8 text-gray-400 text-sm">當前篩選條件下無調撥紀錄</div>
         </div>
 
         <!-- 統計總覽 -->
         <div>
           <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm">
             <span>📊 品項累積總數匯整</span>
-            <span class="text-xs font-normal text-gray-500">（根據所選月份自動即時計算）</span>
+            <span class="text-xs font-normal text-gray-500">（根據所選篩選條件自動即時計算）</span>
           </h3>
           <div class="border border-brand-200 rounded-xl overflow-hidden shadow-2xs">
             <table class="w-full border-collapse text-left">
@@ -233,6 +239,7 @@
         const toClinic = ref('大墩水藥室');
         const searchKeyword = ref('');
         const selectedMonth = ref(currentMonthStr);
+        const selectedItem = ref('');
         const loading = ref(false);
         const submitting = ref(false);
 
@@ -308,8 +315,13 @@
 
         const filteredGroupedLogs = computed(() => {
           const groups = {};
+          const itemKey = selectedItem.value.trim().toLowerCase();
+
           dbLogs.value.forEach(log => {
-            if (!selectedMonth.value || String(log.date).startsWith(selectedMonth.value)) {
+            const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
+            const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
+
+            if (matchMonth && matchItem) {
               const key = `${log.date}_${log.fromClinic}_${log.toClinic}`;
               if (!groups[key]) groups[key] = [];
               groups[key].push(log);
@@ -346,8 +358,13 @@
 
         const totalSummary = computed(() => {
           const summary = {};
+          const itemKey = selectedItem.value.trim().toLowerCase();
+
           dbLogs.value.forEach(log => {
-            if (!selectedMonth.value || String(log.date).startsWith(selectedMonth.value)) {
+            const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
+            const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
+
+            if (matchMonth && matchItem) {
               summary[log.name] = (summary[log.name] || 0) + Number(log.qty);
             }
           });
@@ -355,7 +372,7 @@
         });
 
         return {
-          currentTab, orderDate, fromClinic, toClinic, searchKeyword, selectedMonth, items, activeItemsCount,
+          currentTab, orderDate, fromClinic, toClinic, searchKeyword, selectedMonth, selectedItem, items, activeItemsCount,
           filteredItems, submitOrder, dbLogs, filteredGroupedLogs, editLogQty, deleteLog, totalSummary,
           loading, submitting, fetchLogs
         };
