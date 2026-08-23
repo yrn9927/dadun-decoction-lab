@@ -3,44 +3,101 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>院所品項調撥與後台統計系統 (云端雲端連線版)</title>
+  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <!-- 引入 Tailwind CSS 與 Vue.js -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+  <script>
+    // 自訂風澤醫療體系品牌配色
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            brand: {
+              50: '#FAF7F2',   // 全局暖背景色
+              100: '#F5ECE1',  // 淺色卡片/高亮背景
+              200: '#E6D5C3',  // 柔和邊框色
+              300: '#D4BBA3',  // 輸入框/分隔線邊框
+              400: '#B89274',  // 輔助標示色
+              500: '#8C6649',  // 次要按鈕/文字
+              600: '#6B4C35',  // 主品牌棕色 (主按鈕/標題)
+              700: '#543B28',  // Hover 懸停加深
+              800: '#3D2A1C',  // 深色內文
+              900: '#281B12'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap');
+    .font-serif-tc { font-family: 'Noto Serif TC', serif; }
+  </style>
 </head>
-<body class="bg-gray-100 p-4 md:p-6">
+<body class="bg-brand-50 min-h-screen p-4 md:p-6 text-brand-800">
   <div id="app" class="max-w-6xl mx-auto">
+    
+    <!-- 頂部 Header：品牌 Logo、系統標題列與回首頁按鈕 -->
+    <header class="bg-white border-b border-brand-200 px-6 py-4 mb-6 rounded-xl shadow-xs flex flex-wrap items-center justify-between gap-4">
+      <div class="flex items-center space-x-4">
+        <!-- Logo 區域 -->
+        <div class="flex items-baseline space-x-1.5">
+          <span class="text-3xl font-serif-tc font-bold text-brand-700 tracking-wider">風澤</span>
+          <span class="text-[10px] font-medium text-brand-500 tracking-tight border-t border-brand-500 pt-0.5">醫療體系</span>
+        </div>
+        <!-- 分隔線 -->
+        <div class="h-6 w-[1.5px] bg-gray-300"></div>
+        <!-- 系統標題 -->
+        <h1 class="text-xl font-bold text-brand-800 tracking-wide">大墩水藥室管理系統</h1>
+      </div>
+
+      <!-- 右側按鈕區塊 -->
+      <div class="flex items-center gap-3">
+        <!-- 返回主控台按鈕 -->
+        <a href="index.html" class="inline-flex items-center gap-1.5 text-xs font-bold bg-brand-50 hover:bg-brand-100 text-brand-700 border border-brand-200 px-3.5 py-2 rounded-lg transition-colors shadow-2xs">
+          🏠 返回主控台
+        </a>
+        <!-- 品牌膠囊標籤 -->
+        <span class="hidden sm:inline-block px-4 py-1.5 border border-brand-200 bg-brand-50 text-brand-600 rounded-full text-sm font-medium shadow-2xs">
+          風澤醫療體系
+        </span>
+      </div>
+    </header>
+
     <!-- 頁籤切換：前台輸入 vs 後台管理 -->
-    <div class="flex border-b border-gray-300 mb-6 bg-white rounded-t-lg shadow">
-      <button @click="currentTab = 'input'" :class="['px-6 py-3 font-bold', currentTab === 'input' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500']">
+    <div class="flex border-b border-brand-200 mb-6 bg-white rounded-t-xl shadow-xs overflow-hidden">
+      <button @click="currentTab = 'input'" 
+              :class="['px-6 py-3.5 font-bold transition-all', currentTab === 'input' ? 'border-b-2 border-brand-600 text-brand-600 bg-brand-50/50' : 'text-gray-500 hover:text-brand-600']">
         📝 填寫調撥單
       </button>
-      <button @click="currentTab = 'admin'; fetchLogs()" :class="['px-6 py-3 font-bold flex items-center gap-2', currentTab === 'admin' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500']">
+      <button @click="currentTab = 'admin'; fetchLogs()" 
+              :class="['px-6 py-3.5 font-bold flex items-center gap-2 transition-all', currentTab === 'admin' ? 'border-b-2 border-brand-600 text-brand-600 bg-brand-50/50' : 'text-gray-500 hover:text-brand-600']">
         📊 後台管理與歷史查詢
         <span v-if="loading" class="animate-spin text-xs">🌀</span>
       </button>
     </div>
 
     <!-- 1. 前端填寫頁面 -->
-    <div v-if="currentTab === 'input'" class="bg-white p-6 rounded-lg shadow">
-      <div class="flex justify-between items-center mb-4 border-b pb-3">
-        <h2 class="text-xl font-bold text-gray-800">院所調撥單輸入（共 {{ items.length }} 項）</h2>
-        <span class="text-sm font-semibold text-blue-600 bg-blue-50 px-3 py-1 rounded-full">已填寫 {{ activeItemsCount }} 項</span>
+    <div v-if="currentTab === 'input'" class="bg-white p-6 rounded-xl shadow-sm border border-brand-200">
+      <div class="flex justify-between items-center mb-5 border-b border-brand-100 pb-3">
+        <h2 class="text-lg font-bold text-brand-800">院所調撥單輸入（共 {{ items.length }} 項）</h2>
+        <span class="text-xs font-semibold text-brand-700 bg-brand-100 px-3 py-1.5 rounded-full border border-brand-200">已填寫 {{ activeItemsCount }} 項</span>
       </div>
       
       <!-- 院所資訊與日期欄位 -->
-      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4 bg-gray-50 p-4 rounded-lg border">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-5 bg-brand-50/60 p-4 rounded-lg border border-brand-200">
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">📅 調撥日期</label>
-          <input type="date" v-model="orderDate" class="border p-2 rounded w-full bg-white focus:ring-2 focus:ring-blue-400">
+          <label class="block text-xs font-bold text-brand-700 mb-1.5">📅 調撥日期</label>
+          <input type="date" v-model="orderDate" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">🏥 調出院所（提供方）</label>
-          <input type="text" v-model="fromClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border p-2 rounded w-full bg-white focus:ring-2 focus:ring-blue-400">
+          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調出院所（提供方）</label>
+          <input type="text" v-model="fromClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
         </div>
         <div>
-          <label class="block text-sm font-medium text-gray-700 mb-1">🏥 調入力院所（需求方）</label>
-          <input type="text" v-model="toClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border p-2 rounded w-full bg-white focus:ring-2 focus:ring-blue-400">
+          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調入力院所（需求方）</label>
+          <input type="text" v-model="toClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
         </div>
         
         <datalist id="clinic-list">
@@ -55,103 +112,106 @@
       </div>
 
       <!-- 關鍵字搜尋 -->
-      <div class="mb-4">
-        <label class="block text-sm font-medium text-gray-700 mb-1">🔍 快速搜尋品項</label>
-        <input type="text" v-model="searchKeyword" placeholder="輸入藥名或關鍵字 (如：轉骨、膠囊、面膜)..." class="border p-2 rounded w-full focus:ring-2 focus:ring-blue-400">
+      <div class="mb-5">
+        <label class="block text-xs font-bold text-brand-700 mb-1.5">🔍 快速搜尋品項</label>
+        <input type="text" v-model="searchKeyword" placeholder="輸入藥名或關鍵字 (如：轉骨、膠囊、面膜)..." class="border border-brand-300 p-2.5 rounded-lg w-full text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
       </div>
 
       <!-- 品項清單 -->
-      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto p-2 border rounded bg-gray-50">
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto p-3 border border-brand-200 rounded-lg bg-brand-50/30">
         <div v-for="item in filteredItems" :key="item.name" 
-             :class="['flex justify-between items-center p-3 border rounded transition-colors', item.qty > 0 ? 'bg-blue-50 border-blue-300' : 'bg-white hover:bg-gray-100']">
-          <span class="font-medium text-sm text-gray-800 pr-2">{{ item.name }}</span>
-          <input type="number" min="0" placeholder="0" v-model.number="item.qty" class="border p-1 w-20 text-center rounded focus:ring-2 focus:ring-blue-400 font-bold text-blue-800">
+             :class="['flex justify-between items-center p-3 rounded-lg border transition-all', item.qty > 0 ? 'bg-brand-100/80 border-brand-400 shadow-2xs' : 'bg-white border-brand-200 hover:border-brand-300']">
+          <span class="font-medium text-sm text-brand-800 pr-2">{{ item.name }}</span>
+          <input type="number" min="0" placeholder="0" v-model.number="item.qty" class="border border-brand-300 p-1 w-20 text-center rounded-md focus:ring-2 focus:ring-brand-400 font-bold text-brand-700 bg-white">
         </div>
       </div>
 
-      <button @click="submitOrder" :disabled="submitting" class="mt-6 w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 rounded-lg shadow transition-all text-lg flex justify-center items-center gap-2">
+      <!-- 送出按鈕 -->
+      <button @click="submitOrder" :disabled="submitting" class="mt-6 w-full bg-brand-600 hover:bg-brand-700 text-white font-bold py-3.5 rounded-xl shadow-md hover:shadow-lg transition-all text-base flex justify-center items-center gap-2 cursor-pointer disabled:opacity-50">
         <span v-if="submitting">資料傳送中...</span>
         <span v-else>送出調撥單（同步至雲端）</span>
       </button>
     </div>
 
     <!-- 2. 後台統計與歷史查詢頁面 -->
-    <div v-if="currentTab === 'admin'" class="bg-white p-6 rounded-lg shadow">
-      <div class="flex flex-wrap justify-between items-center border-b pb-3 mb-6 gap-4">
+    <div v-if="currentTab === 'admin'" class="bg-white p-6 rounded-xl shadow-sm border border-brand-200">
+      <div class="flex flex-wrap justify-between items-center border-b border-brand-100 pb-4 mb-6 gap-4">
         <div class="flex items-center gap-3">
-          <h2 class="text-xl font-bold text-gray-800">後台調撥數據統計與管理</h2>
-          <button @click="fetchLogs" class="text-xs bg-gray-100 hover:bg-gray-200 text-gray-700 px-3 py-1.5 rounded border flex items-center gap-1">
+          <h2 class="text-lg font-bold text-brand-800">後台調撥數據統計與管理</h2>
+          <button @click="fetchLogs" class="text-xs bg-brand-50 hover:bg-brand-100 text-brand-700 px-3 py-1.5 rounded-lg border border-brand-200 flex items-center gap-1 transition-colors">
             🔄 重新整理雲端資料
           </button>
         </div>
         
         <!-- 月份搜尋與過濾器 -->
-        <div class="flex items-center gap-2 bg-blue-50 p-2 rounded-lg border border-blue-200">
-          <label class="text-sm font-bold text-blue-800">🔍 查詢月份：</label>
-          <input type="month" v-model="selectedMonth" class="border p-1 rounded bg-white text-sm focus:ring-2 focus:ring-blue-400">
-          <button @click="selectedMonth = ''" class="text-xs bg-gray-200 hover:bg-gray-300 px-2 py-1.5 rounded font-medium">重置（顯示全部）</button>
+        <div class="flex items-center gap-2 bg-brand-50 p-2 rounded-lg border border-brand-200">
+          <label class="text-xs font-bold text-brand-700">🔍 查詢月份：</label>
+          <input type="month" v-model="selectedMonth" class="border border-brand-300 p-1 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
+          <button @click="selectedMonth = ''" class="text-xs bg-white hover:bg-brand-100 border border-brand-200 px-2 py-1 rounded-md font-medium text-brand-700">重置（顯示全部）</button>
         </div>
       </div>
 
       <!-- 載入中狀態 -->
-      <div v-if="loading" class="text-center py-12 text-blue-600 font-bold text-lg">
+      <div v-if="loading" class="text-center py-12 text-brand-600 font-bold text-base">
         ☁️ 正在連線至雲端讀取最新調撥紀錄...
       </div>
 
       <template v-else>
         <!-- 每日與院所調撥明細 -->
         <div class="mb-8">
-          <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm">
             <span>📅 調撥紀錄明細</span>
-            <span class="text-xs bg-gray-100 px-2 py-0.5 rounded text-gray-600" v-if="selectedMonth">搜尋條件：{{ selectedMonth }}</span>
+            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedMonth">搜尋條件：{{ selectedMonth }}</span>
           </h3>
 
-          <div v-for="(logs, groupKey) in filteredGroupedLogs" :key="groupKey" class="mb-4 border rounded-lg p-4 bg-gray-50 shadow-sm">
-            <div class="flex flex-wrap justify-between items-center border-b pb-2 mb-3">
-              <div class="font-bold text-blue-800 text-base md:text-lg">
+          <div v-for="(logs, groupKey) in filteredGroupedLogs" :key="groupKey" class="mb-4 border border-brand-200 rounded-xl p-4 bg-brand-50/40 shadow-2xs">
+            <div class="flex flex-wrap justify-between items-center border-b border-brand-200 pb-2.5 mb-3">
+              <div class="font-bold text-brand-700 text-sm md:text-base">
                 📅 日期：{{ logs[0].date }}
               </div>
-              <div class="text-sm bg-blue-100 text-blue-800 px-3 py-1 rounded-full font-semibold">
+              <div class="text-xs bg-brand-100 text-brand-700 px-3 py-1 rounded-full font-bold border border-brand-200">
                 🔄 {{ logs[0].fromClinic }} ➔ {{ logs[0].toClinic }}
               </div>
             </div>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2">
-              <div v-for="log in logs" :key="log.id" class="bg-white p-2.5 border rounded shadow-xs flex justify-between items-center">
-                <span class="text-sm font-medium text-gray-700">{{ log.name }}</span>
-                <div class="flex items-center gap-1">
-                  <span class="font-bold text-red-600 bg-red-50 px-2 py-0.5 rounded border border-red-100 mr-1">x {{ log.qty }}</span>
-                  <button @click="editLogQty(log)" class="text-xs bg-amber-500 hover:bg-amber-600 text-white px-2 py-1 rounded transition-colors" title="修改數量">✏️</button>
-                  <button @click="deleteLog(log.id)" class="text-xs bg-red-500 hover:bg-red-600 text-white px-2 py-1 rounded transition-colors" title="刪除此筆">🗑️</button>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-2.5">
+              <div v-for="log in logs" :key="log.id" class="bg-white p-2.5 border border-brand-200 rounded-lg shadow-2xs flex justify-between items-center">
+                <span class="text-sm font-medium text-brand-800">{{ log.name }}</span>
+                <div class="flex items-center gap-1.5">
+                  <span class="font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded border border-amber-200 text-xs mr-1">x {{ log.qty }}</span>
+                  <button @click="editLogQty(log)" class="text-xs bg-amber-600 hover:bg-amber-700 text-white px-2 py-1 rounded-md transition-colors" title="修改數量">✏️</button>
+                  <button @click="deleteLog(log.id)" class="text-xs bg-rose-600 hover:bg-rose-700 text-white px-2 py-1 rounded-md transition-colors" title="刪除此筆">🗑️</button>
                 </div>
               </div>
             </div>
           </div>
-          <div v-if="Object.keys(filteredGroupedLogs).length === 0" class="text-center py-8 text-gray-400">此月份尚無雲端調撥紀錄</div>
+          <div v-if="Object.keys(filteredGroupedLogs).length === 0" class="text-center py-8 text-gray-400 text-sm">此月份尚無雲端調撥紀錄</div>
         </div>
 
         <!-- 統計總覽 -->
         <div>
-          <h3 class="font-bold text-gray-700 mb-3 flex items-center gap-2">
+          <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm">
             <span>📊 品項累積總數匯整</span>
             <span class="text-xs font-normal text-gray-500">（根據所選月份自動即時計算）</span>
           </h3>
-          <table class="w-full border-collapse border text-left rounded overflow-hidden shadow-sm">
-            <thead>
-              <tr class="bg-gray-100 text-gray-700">
-                <th class="border p-3">品項名稱</th>
-                <th class="border p-3 text-right">總調撥數量</th>
-              </tr>
-            </thead>
-            <tbody>
-              <tr v-for="(total, name) in totalSummary" :key="name" class="hover:bg-gray-50">
-                <td class="border p-3 font-medium text-gray-800">{{ name }}</td>
-                <td class="border p-3 text-right text-blue-600 font-bold text-lg">{{ total }}</td>
-              </tr>
-              <tr v-if="Object.keys(totalSummary).length === 0">
-                <td colspan="2" class="border p-6 text-center text-gray-400">當前篩選條件下無資料</td>
-              </tr>
-            </tbody>
-          </table>
+          <div class="border border-brand-200 rounded-xl overflow-hidden shadow-2xs">
+            <table class="w-full border-collapse text-left">
+              <thead>
+                <tr class="bg-brand-100/70 text-brand-800 border-b border-brand-200 text-sm">
+                  <th class="p-3 font-bold">品項名稱</th>
+                  <th class="p-3 text-right font-bold">總調撥數量</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-brand-100 bg-white text-sm">
+                <tr v-for="(total, name) in totalSummary" :key="name" class="hover:bg-brand-50/50 transition-colors">
+                  <td class="p-3 font-medium text-brand-800">{{ name }}</td>
+                  <td class="p-3 text-right text-brand-600 font-bold text-base">{{ total }}</td>
+                </tr>
+                <tr v-if="Object.keys(totalSummary).length === 0">
+                  <td colspan="2" class="p-6 text-center text-gray-400">當前篩選條件下無資料</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
         </div>
       </template>
     </div>
@@ -160,7 +220,6 @@
   <script>
     const { createApp, ref, computed, onMounted } = Vue;
 
-    // ⚠️ 關鍵設定：請在此處替換為你部署的 Google Apps Script 網頁應用程式 URL
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzHEkdHXj8VoFZ38iEL6P9WLGoXm_ivARLoQWBLDfPyY2oV-1Qv1Nf7uGr5cMeEByi1fw/exec';
 
     createApp({
@@ -178,13 +237,12 @@
         const submitting = ref(false);
 
         const rawItems = [
-          "轉骨前期飲", "轉骨方男飲", "轉骨方女飲", "轉骨(綜)飲", "加味生化湯飲", "加味四物湯飲W", "加味四物湯飲C", "首烏養血湯飲", "護肝飲", "降脂美體1號飲", "降脂美體2號飲", "降脂美體3號飲", "補氣甲飲", "補氣乙飲", "補氣丙飲", "止痛方飲", "舒筋活絡湯飲", "坐浴劑外用", "薰鼻劑外用", "薰鼻劑(含薄荷)外用", "暖腳劑外用", "甘露皮炎劑外用", "防禦飲", "智愛湯飲", "益智飲", "復氣飲", "清潤飲", "龜鹿關節方飲", "龜鹿育齡方飲", "龜鹿養孕方飲", "整脊一號飲(30包/鍋)", "風寒方飲(水藥葛根湯)(28包/鍋)", "關節方飲(28包/袋)", "定咳方飲(28包/鍋)", "夜光飲(28包/鍋)", "固氣飲(28包/鍋)", "安神助眠方飲(28包/鍋)", "止咳飲(28包/鍋)", "益復飲(28包/鍋)", "養血固髮方飲(28包/鍋)", "梅桂飲(28包/鍋)", "天麻益智茶(8入)", "天麻益智茶(試飲)", "菊花茶(8入)", "菊花茶(試飲)", "黃耆茶(8入)", "黃耆茶(試飲)", "玫瑰茶(8入)", "玫瑰茶(試飲)", "洛神花茶(8入)", "洛神花茶(試飲)", "防禦茶(8入)", "防禦茶(試飲)", "清潤茶(8入)", "清潤茶(試飲)", "響聲茶(8入)", "響聲茶(試飲)", "益甘茶(8入)", "益甘茶(試飲)", "定志茶(8入)", "定志茶(試飲)", "紓壓茶(8入)", "紓壓茶(試饮)", "屏風茶(8入)", "屏風茶(試飲)", "山楂茶(8入)", "山楂茶(試飲)", "不厭茶(8入)", "不厭茶(試飲)", "甘麥茶(8入)", "甘麥茶(試飲)", "清暑茶(8入)", "清暑茶(試飲)", "袪濕茶(8入)", "袪濕茶(試飲)", "活動茶包2入", "產後泌乳茶", "產後益腎茶", "產後養肝茶", "產後順暢茶", "產後安神茶", "加味保產無憂茶(預訂)", "葛花解酒茶(預訂)", "葛花解酒茶(7入)(預訂)", "外敷方(臉)4包/組", "珍珠玉容散(大)", "珍珠玉容散(小)", "足安心(泡腳方)藥包-外用", "藥浴包-外用(100元)", "藥浴包-外用(140元)", "本草藥浴包", "舒眠藥浴包-外用", "洗劑A20ML外用", "洗劑A100ML外用", "洗劑B100ML外用", "療膚膏(水)", "銀黛膏(水)", "雪皇膏(水)", "吹喉散(水)", "護齦固齒方(大瓶)50g", "薰蒸藥材包7小包", "涼補(補冬)藥膳包", "溫補(補冬)藥膳包", "十全大補藥膳包", "草本食養藥膳包", "薰蒸藥材", "仙梅粒小包", "仙梅粒大包", "仙楂餅小包", "仙楂餅大包", "酸梅小包", "酸梅大包1斤", "港香蘭葉黃素飲750ml", "港香蘭葡萄糖胺飲", "紫雲膏(科)(港)10g", "紫雲膏(科)(港)3g", "植萃保濕修護面膜", "天絲高保濕三效面膜", "天絲高保濕三效面膜-限院內使用", "P1P安瓶", "台塑白芷蘆薈凝膠", "衛格爾青春痘凝膠", "莊松榮紫雲膏口紅條", "莊松榮金瘡膏", "天明療膚靈", "燙膚舒乳膏", "使皮新軟膏", "勸奉堂清爽痱子粉", "三帆白芷金絲膏", "天明白芷金絲膏", "得生金絲膏水性貼布", "淨鼻鼻腔噴洗器", "纈草100克/1瓶", "勸奉堂肥兒健脾散(肥兒八珍糕加減味)", "正揚行氣散", "正揚樂胃散", "三才堂胃散", "正揚小兒萬病回春散", "勸奉堂牛標嗽安散寧嗽散加味", "勸奉堂和中漢方胃腸藥濃縮細粒", "勸奉堂加味牛黃解毒散", "勸奉堂龜鹿二仙膠濃縮細粒", "勸奉堂利嗽散定喘散加減味", "珍珠粉(水飛)150G", "晉安海藻散", "晉安小薊飲子濃縮顆粒", "琥珀粉", "杜仲粉", "甜菊粉", "新甘蜜王", "三伏-小孩/1斤", "三伏-大人/1斤", "五癀散/1斤", "華昌白及散", "阿膠生粉/200克", "昕泰三七散", "冬蟲夏草粉200克", "粉光蔘粉/600克", "美國花旗蔘粉", "天麻生粉/200克", "精氨酸粉200克", "南瓜子粉200克", "透納葉200克", "黑糖/包", "銀杏葉粉/100克", "東阿阿膠生粉/100克", "冰片100克", "薄荷腦100克", "活血2號粉100克", "珠貝粉300克", "高麗蔘粉100克", "鹿茸100克", "水牛粉角100克", "東洋蔘粉100克", "正揚七釐散300克/1瓶", "健衛寶", "順天堂臺灣清冠一號濃縮顆粒", "EGCG1000顆/1瓶", "樂消(白)/1瓶", "藤黃果/1瓶", "孅脂素/1瓶", "四倍濃縮麻黃錠/1瓶", "武靴葉膠囊180粒/1瓶", "咸豐草膠囊/一盒", "瑪卡威剛66粒/1盒", "逆時光山藥膠囊(峰王乳)/1盒", "紅景天膠囊60顆-港/1盒", "牛樟芝膠囊60顆-港/1盒", "寒天(飽足感)1000顆/1瓶", "冬蟲夏草膠囊(大墩)/100粒", "小三通膠囊/1000粒", "高纖膠囊/1000粒", "綠茶素1000顆/1瓶", "麗質1000顆/1瓶", "麗托1000顆/1瓶", "甲殼素/200粒", "綠姿膠囊/200顆", "巧纖/非洲芒果(巧纖)/1000粒", "順儷(S密碼膠囊)/500粒", "苦橙膠囊/1000粒", "綠茶S/1000粒", "纖暢膠囊/200粒", "葆蓮膠囊/200粒", "快樂瓜膠囊/200粒", "活力順膠囊1000粒/1瓶", "鎂孟膠囊/1000粒", "纖體膠囊(山茶花)/200粒", "寶益康膠囊/100粒", "唐切素膠囊/200粒", "白高顆(峰立挺)/100粒", "輕盈(紅花籽油)/100粒", "蚓激酶膠囊/100粒", "舒昱膠囊/100粒", "樂活順暢膠囊1000粒/1瓶", "紅麴膠囊1000粒/1瓶", "Slimdown(膜衣錠)1000粒/1瓶", "防己黃耆湯錠500粒/1瓶", "桃仁承氣湯錠500粒/瓶", "寶膳纖膠囊1000粒/1瓶", "港香蘭纖活濃縮膠囊1000粒", "元氣膠囊/500粒", "白腎豆膠囊1000粒/1瓶", "牛標大造丸", "加味健步虎潛丸", "加味健步虎潛丸(科達)", "龜鹿二仙丸/1000顆", "黃連解毒丸", "3號夾鏈袋", "4號夾鏈袋", "5號夾鏈袋", "6號夾鏈袋", "7號夾鏈袋", "8號夾鏈袋", "9號夾鏈袋", "5號紅頭罐", "6號紅頭罐", "7號紅頭罐", "8號紅頭罐", "3G空罐", "10G空罐", "30G空罐", "風澤提袋", "減重藥袋", "報表紙", "初診單/200張(本)", "月子手冊", "轉骨本", "減重紀錄卡", "風澤水煎藥服用叮嚀", "飲食宜忌表/100張(本)", "助你好孕/100張", "轉骨小叮嚀/100張", "三伏/三九貼注意事項/100張", "埋線注意事項、健康飲食叮嚀/100張", "日式減重/100張", "美妍針/100張", "濕敷療法/100張", "小針刀/100張", "針灸須知/100張", "治療卡/200張(本)", "風澤中藥材煎煮使用說明", "醫療用廢棄物垃圾桶", "風澤公版藥袋", "鋁箔膠帶15mm*40M", "鋁箔膠帶10mm*40M", "鋁箔膠帶25mm*40M", "薰鼻機用蛇管-45公分", "寶兒樂噴霧治療機", "熱敷墊〈14*27〉方形", "熱敷墊〈20*20〉肩式", "基礎體溫計", "驗孕試紙", "排卵試紙", "丹田灸/1盒", "黃土炭/1罐", "體灸", "龜鹿膠(無蔘)大盒(32片)(勸)", "龜鹿二仙膠(含人蔘/枸杞)大盒(32片)(勸)", "龜鹿膠(無蔘)小盒(8片)(勸)", "龜鹿二仙膠(含人蔘/枸杞)小盒(8片)(勸)", "龜鹿膠(無蔘)一片(五錢)(勸)", "龜鹿二仙膠(含人蔘/枸杞)一片(五錢)(勸)", "東阿阿膠-8錢/1片", "燕窩盒裝(四兩)", "粉光蔘片一盒", "安全藥材生地黃-順天", "安全藥材炒白芍-順天", "安全藥材炙甘草-順天", "安全藥材桂枝-順天", "安全藥材黨蔘-順天", "安全藥材紅棗-順天", "安全藥材枸杞-順天", "安全藥材熟地黃-順天", "安全藥材乾薑-順天", "安全藥材炒白朮-順天", "安全藥材菊花-順天", "安全藥材黃耆-順天", "安全藥材山藥300克-順天", "安全藥材白蔘300克-順天", "安全藥材杜仲-科達", "安全藥材茯苓-科達", "安全藥材黨蔘-科達", "安全藥材甘草-科達", "安全藥材川芎-科達", "安全藥材炒白朮-科達", "安全藥材當歸-科達"
+          "轉骨前期飲", "轉骨方男飲", "轉骨方女飲", "轉骨(綜)飲", "加味生化湯飲", "加味四物湯飲W", "加味四物湯飲C", "首烏養血湯飲", "護肝飲", "降脂美體1號飲", "降脂美體2號飲", "降脂美體3號飲", "補氣甲飲", "補氣乙飲", "補氣丙飲", "止痛方飲", "舒筋活絡湯飲", "坐浴劑外用", "薰鼻劑外用", "薰鼻劑(含薄荷)外用", "暖腳劑外用", "甘露皮炎劑外用", "防禦飲", "智愛湯飲", "益智飲", "復氣飲", "清潤飲", "龜鹿關節方飲", "龜鹿育齡方飲", "龜鹿養孕方飲", "整脊一號飲(30包/鍋)", "風寒方飲(水藥葛根湯)(28包/鍋)", "關節方飲(28包/袋)", "定咳方飲(28包/鍋)", "夜光飲(28包/鍋)", "固氣飲(28包/鍋)", "安神助眠方飲(28包/鍋)", "止咳飲(28包/鍋)", "益復飲(28包/鍋)", "養血固髮方飲(28包/鍋)", "梅桂飲(28包/鍋)", "天麻益智茶(8入)", "天麻益智茶(試飲)", "菊花茶(8入)", "菊花茶(試飲)", "黃耆茶(8入)", "黃耆茶(試飲)", "玫瑰茶(8入)", "玫瑰茶(試飲)", "洛神花茶(8入)", "洛神花茶(試飲)", "防禦茶(8入)", "防禦茶(試飲)", "清潤茶(8入)", "清潤茶(試飲)", "響聲茶(8入)", "響聲茶(試飲)", "益甘茶(8入)", "益甘茶(試飲)", "定志茶(8入)", "定志茶(試飲)", "紓壓茶(8入)", "紓壓茶(試飲)", "屏風茶(8入)", "屏風茶(試飲)", "山楂茶(8入)", "山楂茶(試飲)", "不厭茶(8入)", "不厭茶(試飲)", "甘麥茶(8入)", "甘麥茶(試飲)", "清暑茶(8入)", "清暑茶(試飲)", "袪濕茶(8入)", "袪濕茶(試飲)", "活動茶包2入", "產後泌乳茶", "產後益腎茶", "產後養肝茶", "產後順暢茶", "產後安神茶", "加味保產無憂茶(預訂)", "葛花解酒茶(預訂)", "葛花解酒茶(7入)(預訂)", "外敷方(臉)4包/組", "珍珠玉容散(大)", "珍珠玉容散(小)", "足安心(泡腳方)藥包-外用", "藥浴包-外用(100元)", "藥浴包-外用(140元)", "本草藥浴包", "舒眠藥浴包-外用", "洗劑A20ML外用", "洗劑A100ML外用", "洗劑B100ML外用", "療膚膏(水)", "銀黛膏(水)", "雪皇膏(水)", "吹喉散(水)", "護齦固齒方(大瓶)50g", "薰蒸藥材包7小包", "涼補(補冬)藥膳包", "溫補(補冬)藥膳包", "十全大補藥膳包", "草本食養藥膳包", "薰蒸藥材", "仙梅粒小包", "仙梅粒大包", "仙楂餅小包", "仙楂餅大包", "酸梅小包", "酸梅大包1斤", "港香蘭葉黃素飲750ml", "港香蘭葡萄糖胺飲", "紫雲膏(科)(港)10g", "紫雲膏(科)(港)3g", "植萃保濕修護面膜", "天絲高保濕三效面膜", "天絲高保濕三效面膜-限院內使用", "P1P安瓶", "台塑白芷蘆薈凝膠", "衛格爾青春痘凝膠", "莊松榮紫雲膏口紅條", "莊松榮金瘡膏", "天明療膚靈", "燙膚舒乳膏", "使皮新軟膏", "勸奉堂清爽痱子粉", "三帆白芷金絲膏", "天明白芷金絲膏", "得生金絲膏水性貼布", "淨鼻鼻腔噴洗器", "纈草100克/1瓶", "勸奉堂肥兒健脾散(肥兒八珍糕加減味)", "正揚行氣散", "正揚樂胃散", "三才堂胃散", "正揚小兒萬病回春散", "勸奉堂牛標嗽安散寧嗽散加味", "勸奉堂和中漢方胃腸藥濃縮細粒", "勸奉堂加味牛黃解毒散", "勸奉堂龜鹿二仙膠濃縮細粒", "勸奉堂利嗽散定喘散加減味", "珍珠粉(水飛)150G", "晉安海藻散", "晉安小薊飲子濃縮顆粒", "琥珀粉", "杜仲粉", "甜菊粉", "新甘蜜王", "三伏-小孩/1斤", "三伏-大人/1斤", "五癀散/1斤", "華昌白及散", "阿膠生粉/200克", "昕泰三七散", "冬蟲夏草粉200克", "粉光蔘粉/600克", "美國花旗蔘粉", "天麻生粉/200克", "精氨酸粉200克", "南瓜子粉200克", "透納葉200克", "黑糖/包", "銀杏葉粉/100克", "東阿阿膠生粉/100克", "冰片100克", "薄荷腦100克", "活血2號粉100克", "珠貝粉300克", "高麗蔘粉100克", "鹿茸100克", "水牛粉角100克", "東洋蔘粉100克", "正揚七釐散300克/1瓶", "健衛寶", "順天堂臺灣清冠一號濃縮顆粒", "EGCG1000顆/1瓶", "樂消(白)/1瓶", "藤黃果/1瓶", "孅脂素/1瓶", "四倍濃縮麻黃錠/1瓶", "武靴葉膠囊180粒/1瓶", "咸豐草膠囊/一盒", "瑪卡威剛66粒/1盒", "逆時光山藥膠囊(峰王乳)/1盒", "紅景天膠囊60顆-港/1盒", "牛樟芝膠囊60顆-港/1盒", "寒天(飽足感)1000顆/1瓶", "冬蟲夏草膠囊(大墩)/100粒", "小三通膠囊/1000粒", "高纖膠囊/1000粒", "綠茶素1000顆/1瓶", "麗質1000顆/1瓶", "麗托1000顆/1瓶", "甲殼素/200粒", "綠姿膠囊/200顆", "巧纖/非洲芒果(巧纖)/1000粒", "順儷(S密碼膠囊)/500粒", "苦橙膠囊/1000粒", "綠茶S/1000粒", "纖暢膠囊/200粒", "葆蓮膠囊/200粒", "快樂瓜膠囊/200粒", "活力順膠囊1000粒/1瓶", "鎂孟膠囊/1000粒", "纖體膠囊(山茶花)/200粒", "寶益康膠囊/100粒", "唐切素膠囊/200粒", "白高顆(峰立挺)/100粒", "輕盈(紅花籽油)/100粒", "蚓激酶膠囊/100粒", "舒昱膠囊/100粒", "樂活順暢膠囊1000粒/1瓶", "紅麴膠囊1000粒/1瓶", "Slimdown(膜衣錠)1000粒/1瓶", "防己黃耆湯錠500粒/1瓶", "桃仁承氣湯錠500粒/瓶", "寶膳纖膠囊1000粒/1瓶", "港香蘭纖活濃縮膠囊1000粒", "元氣膠囊/500粒", "白腎豆膠囊1000粒/1瓶", "牛標大造丸", "加味健步虎潛丸", "加味健步虎潛丸(科達)", "龜鹿二仙丸/1000顆", "黃連解毒丸", "3號夾鏈袋", "4號夾鏈袋", "5號夾鏈袋", "6號夾鏈袋", "7號夾鏈袋", "8號夾鏈袋", "9號夾鏈袋", "5號紅頭罐", "6號紅頭罐", "7號紅頭罐", "8號紅頭罐", "3G空罐", "10G空罐", "30G空罐", "風澤提袋", "減重藥袋", "報表紙", "初診單/200張(本)", "月子手冊", "轉骨本", "減重紀錄卡", "風澤水煎藥服用叮嚀", "飲食宜忌表/100張(本)", "助你好孕/100張", "轉骨小叮嚀/100張", "三伏/三九貼注意事項/100張", "埋線注意事項、健康飲食叮嚀/100張", "日式減重/100張", "美妍針/100張", "濕敷療法/100張", "小針刀/100張", "針灸須知/100張", "治療卡/200張(本)", "風澤中藥材煎煮使用說明", "醫療用廢棄物垃圾桶", "風澤公版藥袋", "鋁箔膠帶15mm*40M", "鋁箔膠帶10mm*40M", "鋁箔膠帶25mm*40M", "薰鼻機用蛇管-45公分", "寶兒樂噴霧治療機", "熱敷墊〈14*27〉方形", "熱敷墊〈20*20〉肩式", "基礎體溫計", "驗孕試紙", "排卵試紙", "丹田灸/1盒", "黃土炭/1罐", "體灸", "龜鹿膠(無蔘)大盒(32片)(勸)", "龜鹿二仙膠(含人蔘/枸杞)大盒(32片)(勸)", "龜鹿膠(無蔘)小盒(8片)(勸)", "龜鹿二仙膠(含人蔘/枸杞)小盒(8片)(勸)", "龜鹿膠(無蔘)一片(五錢)(勸)", "龜鹿二仙膠(含人蔘/枸杞)一片(五錢)(勸)", "東阿阿膠-8錢/1片", "燕窩盒裝(四兩)", "粉光蔘片一盒", "安全藥材生地黃-順天", "安全藥材炒白芍-順天", "安全藥材炙甘草-順天", "安全藥材桂枝-順天", "安全藥材黨蔘-順天", "安全藥材紅棗-順天", "安全藥材枸杞-順天", "安全藥材熟地黃-順天", "安全藥材乾薑-順天", "安全藥材炒白朮-順天", "安全藥材菊花-順天", "安全藥材黃耆-順天", "安全藥材山藥300克-順天", "安全藥材白蔘300克-順天", "安全藥材杜仲-科達", "安全藥材茯苓-科達", "安全藥材黨蔘-科達", "安全藥材甘草-科達", "安全藥材川芎-科達", "安全藥材炒白朮-科達", "安全藥材當歸-科達"
         ];
 
         const items = ref(rawItems.map(name => ({ name, qty: null })));
         const dbLogs = ref([]);
 
-        // 從雲端抓取歷史資料
         const fetchLogs = async () => {
           if (!GAS_URL || GAS_URL.includes('你的部署網址代碼')) return;
           loading.value = true;
@@ -210,7 +268,6 @@
           return items.value.filter(item => item.name.includes(searchKeyword.value.trim()));
         });
 
-        // 送出調撥單（新增到雲端）
         const submitOrder = async () => {
           if (!fromClinic.value.trim() || !toClinic.value.trim()) {
             alert('請填寫「調出院所」與「調入力院所」！');
@@ -239,10 +296,9 @@
               body: JSON.stringify({ action: 'add', data: newData })
             });
 
-            // 清空填寫數量
             submittedItems.forEach(i => i.qty = null);
             alert(`【${fromClinic.value} ➔ ${toClinic.value}】調撥單已成功上傳至雲端！`);
-            fetchLogs(); // 更新最新數據
+            fetchLogs();
           } catch (err) {
             alert('傳送失敗，請稍後再試！');
           } finally {
@@ -262,13 +318,12 @@
           return groups;
         });
 
-        // 後台修改數量（連動雲端）
         const editLogQty = async (log) => {
           const newQtyStr = prompt(`修改「${log.name}」的調撥數量：`, log.qty);
           if (newQtyStr !== null) {
             const newQty = parseInt(newQtyStr, 10);
             if (!isNaN(newQty) && newQty > 0) {
-              log.qty = newQty; // 畫面先變更
+              log.qty = newQty;
               await fetch(GAS_URL, {
                 method: 'POST',
                 body: JSON.stringify({ action: 'update', id: log.id, qty: newQty })
@@ -279,10 +334,9 @@
           }
         };
 
-        // 後台刪除紀錄（連動雲端）
         const deleteLog = async (id) => {
           if (confirm('確定要從雲端刪除這筆紀錄嗎？')) {
-            dbLogs.value = dbLogs.value.filter(log => log.id !== id); // 畫面先刪除
+            dbLogs.value = dbLogs.value.filter(log => log.id !== id);
             await fetch(GAS_URL, {
               method: 'POST',
               body: JSON.stringify({ action: 'delete', id: id })
