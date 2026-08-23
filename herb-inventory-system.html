@@ -864,31 +864,46 @@
                 totalQty += logQty;
                 expBatchMap[rawExp] = Number(((expBatchMap[rawExp] || 0) + logQty).toFixed(4));
                 currentStocktakeBatch = null;
-              } else if (log.type === '出庫' || log.type === '出貨') {
-                totalQty -= logQty;
-                let deductQty = logQty;
+             } else if (log.type === '出庫' || log.type === '出貨') {
+  totalQty -= logQty;
+  let deductQty = logQty;
 
-                const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
-                  if (a === '未填效期') return 1;
-                  if (b === '未填效期') return -1;
-                  return new Date(a) - new Date(b);
-                });
+  // 1. 若紀錄中有指定效期，優先從該效期扣除
+  if (rawExp && expBatchMap[rawExp] !== undefined) {
+    const avail = expBatchMap[rawExp];
+    if (avail >= deductQty) {
+      expBatchMap[rawExp] -= deductQty;
+      deductQty = 0;
+    } else {
+      deductQty -= avail;
+      expBatchMap[rawExp] = 0;
+    }
+  }
 
-                for (const expKey of sortedExpKeys) {
-                  if (deductQty <= 0) break;
-                  const currentExpQty = expBatchMap[expKey] || 0;
-                  if (currentExpQty > 0) {
-                    if (currentExpQty >= deductQty) {
-                      // 修正點：加上 .toFixed(4) 避免浮點數精確度誤差
-                      expBatchMap[expKey] = Number((currentExpQty - deductQty).toFixed(4));
-                      deductQty = 0;
-                    } else {
-                      deductQty = Number((deductQty - currentExpQty).toFixed(4));
-                      expBatchMap[expKey] = 0;
-                    }
-                  }
-                }
-                currentStocktakeBatch = null;
+  // 2. 若指定效期扣不夠（或未指定效期），剩餘數量才按 FIFO 自動從最早效期補扣
+  if (deductQty > 0) {
+    const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
+      if (a === '未填效期') return 1;
+      if (b === '未填效期') return -1;
+      return new Date(a) - new Date(b);
+    });
+
+    for (const expKey of sortedExpKeys) {
+      if (deductQty <= 0) break;
+      const currentExpQty = expBatchMap[expKey];
+      if (currentExpQty > 0) {
+        if (currentExpQty >= deductQty) {
+          expBatchMap[expKey] -= deductQty;
+          deductQty = 0;
+        } else {
+          deductQty -= currentExpQty;
+          expBatchMap[expKey] = 0;
+        }
+      }
+    }
+  }
+  currentStocktakeBatch = null;
+}
               } else if (log.type === '盤點' || log.type === '盤點修正') {
                 const sessionKey = submissionTime ? `${logDate}_${submissionTime}` : `${logDate}_${log.operator || ''}_stocktake`;
 
