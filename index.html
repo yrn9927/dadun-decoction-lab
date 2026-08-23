@@ -3,49 +3,87 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>大墩水藥室管理系統</title>
+  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <script src="https://cdn.tailwindcss.com"></script>
+  <style>
+    /* 風澤主視覺自訂色系 */
+    :root {
+      --bg-main: #F7F4EF;       /* 溫暖米白背景 */
+      --color-primary: #4A3B32; /* 品牌深褐色 */
+      --color-accent: #8C6D53;  /* 暖木色 */
+      --border-color: #E2DAD0;  /* 柔和邊框 */
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--color-primary);
+    }
+  </style>
 </head>
-<body class="bg-slate-100 min-h-screen flex items-center justify-center p-6">
-  <div class="max-w-4xl w-full">
-    
-    <!-- 頁面標題 -->
-    <div class="text-center mb-10">
-      <h1 class="text-3xl font-bold text-slate-800 mb-2">🌿 大墩水藥室管理系統</h1>
-      <p class="text-slate-500 text-sm">請選擇您要使用的功能模組</p>
-    </div>
+<body class="min-h-screen flex flex-col justify-between">
 
-    <!-- 功能卡片區塊 -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+  <!-- 📍 頁首品牌標題列 (Header) -->
+  <header class="bg-white/90 backdrop-blur-md border-b border-[#E2DAD0] shadow-sm sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <!-- 💡 請將下面的 logo.png 替換成您風澤 Logo 的圖片檔案名稱 -->
+        <img src="logo.png" alt="風澤醫療體系" class="h-10 md:h-12 object-contain">
+        <div class="h-6 w-[2px] bg-[#8C6D53]/30 hidden sm:block"></div>
+        <span class="text-base sm:text-lg font-bold text-[#4A3B32] hidden sm:inline-block">大墩水藥室管理系統</span>
+      </div>
+      <span class="text-xs text-[#8C6D53] font-medium bg-[#F7F4EF] px-3 py-1.5 rounded-full border border-[#E2DAD0]">
+        風澤醫療體系
+      </span>
+    </div>
+  </header>
+
+  <!-- 📍 主內容區 -->
+  <main class="flex-1 flex items-center justify-center p-6 my-6">
+    <div class="max-w-4xl w-full">
       
-      <!-- 卡片 1 -->
-      <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">📦</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-emerald-600 transition">庫存管理</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">查詢現有庫存數量與有效期限。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-emerald-600">進入系統 &rarr;</span>
-      </a>
+      <!-- 頁面標題 -->
+      <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-[#4A3B32] mb-3 flex items-center justify-center gap-2">
+          <span>🌿</span> 大墩水藥室管理系統
+        </h1>
+        <p class="text-[#8C6D53] text-sm">請選擇您要使用的功能模組</p>
+      </div>
 
-      <!-- 卡片 2 -->
-      <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">🔄</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-blue-600 transition">院所調撥系統</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">跨院區調撥，貨品流向與歷史紀錄查詢。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-blue-600">進入系統 &rarr;</span>
-      </a>
+      <!-- 功能卡片區塊 -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        
+        <!-- 卡片 1 -->
+        <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">📦</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">庫存管理</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">查詢現有庫存數量與有效期限。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
 
-      <!-- 卡片 3 -->
-      <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-slate-200 transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">📊</div>
-        <h2 class="text-xl font-bold text-slate-800 group-hover:text-amber-600 transition">藥材調撥系統</h2>
-        <p class="text-xs text-slate-500 mt-2 leading-relaxed">紀錄與南竹水藥室調撥之品項、數量與廠商，並能查詢歷史紀錄。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-amber-600">進入系統 &rarr;</span>
-      </a>
+        <!-- 卡片 2 -->
+        <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">🔄</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">院所調撥系統</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">跨院區調撥，貨品流向與歷史紀錄查詢。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
 
+        <!-- 卡片 3 -->
+        <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">📊</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">藥材調撥系統</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室調撥之品項、數量與廠商，並能查詢歷史紀錄。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
+
+      </div>
     </div>
-  </div>
-</body>
-</html>
-  </div>
+  </main>
+
+  <!-- 📍 頁尾 -->
+  <footer class="text-center py-4 text-xs text-[#8C6D53]/70">
+    © 風澤醫療體系 大墩水藥室
+  </footer>
+
 </body>
 </html>
