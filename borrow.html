@@ -406,14 +406,25 @@
     let logs = [];          
     let parsedItems = [];   
 
-    document.addEventListener("DOMContentLoaded", () => {
+    // 取得在地時區格式化日期 (YYYY-MM-DD)
+    function getLocalDateStr() {
       const now = new Date();
-      document.getElementById('batchDate').value = now.toISOString().split('T')[0];
+      const year = now.getFullYear();
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      document.getElementById('batchDate').value = getLocalDateStr();
       fetchLogs();
     });
 
     function formatDateDisplay(dateStr) {
       if (!dateStr) return '';
+      if (typeof dateStr === 'string' && /^\d{4}-\d{2}-\d{2}$/.test(dateStr.trim())) {
+        return dateStr.trim();
+      }
       const d = new Date(dateStr);
       if (isNaN(d.getTime())) return dateStr;
       const year = d.getFullYear();
@@ -652,7 +663,6 @@
       });
     }
 
-    // 計算滿箱並渲染採購通知
     function renderOrderNotifications() {
       const container = document.getElementById('orderNotificationContainer');
       const hideCompleted = document.getElementById('hideCompletedSwitch').checked;
@@ -702,7 +712,6 @@
         const isChecked = localStorage.getItem(notif.id) === 'true';
         if (!isChecked) pendingCount++;
 
-        // 若開啟「隱藏已完成」且該項目已勾選，則跳過顯示
         if (hideCompleted && isChecked) return;
 
         visibleCardCount++;
@@ -742,7 +751,6 @@
         container.innerHTML = `<div class="text-center text-muted py-5">${hideCompleted ? '尚無待處理的採購通知' : '目前尚無累計滿箱的品項通知'}</div>`;
       }
 
-      // 更新紅點數量標籤
       const pendingBadge = document.getElementById('pendingBadge');
       if (pendingCount > 0) {
         pendingBadge.innerText = pendingCount;
@@ -759,7 +767,6 @@
 
       const hideCompleted = document.getElementById('hideCompletedSwitch').checked;
 
-      // 若開啟了隱藏模式，勾選後重新渲染頁面以隱藏
       if (hideCompleted) {
         renderOrderNotifications();
         return;
@@ -781,7 +788,6 @@
         if (txt) txt.innerText = '點我打勾';
       }
 
-      // 重新統計未處理紅點數量
       const allCheckboxes = document.querySelectorAll('#orderNotificationContainer input[type="checkbox"]');
       let pending = 0;
       allCheckboxes.forEach(cb => { if (!cb.checked) pending++; });
@@ -811,7 +817,7 @@
         alert("目前沒有紀錄可匯出！");
         return;
       }
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateStr();
       let csvContent = "借用日期,品項名稱,數量\n";
       logs.forEach(log => {
         csvContent += `"${log.date}","${log.name}","${log.qty}"\n`;
@@ -825,7 +831,7 @@
         return;
       }
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateStr();
       let csvContent = `品項名稱,NO.,日期,借用數量,累積總計\n`;
       
       const itemGroups = {};
