@@ -142,6 +142,91 @@
       padding: 15px;
     }
     #loadingSpinner { display: none; }
+
+    /* 品項獨立表格卡片樣式 */
+    .item-card {
+      border: 1px solid #7cb5ec;
+      border-radius: 4px;
+      overflow: hidden;
+      background-color: #ffffff;
+    }
+    .item-card-header {
+      background-color: #b2d7f5;
+      color: #112233;
+      font-weight: 700;
+      font-size: 1.25rem;
+      text-align: center;
+      padding: 8px;
+      border-bottom: 1px solid #7cb5ec;
+      letter-spacing: 1px;
+    }
+    .item-card-table {
+      margin-bottom: 0;
+      font-size: 0.9rem;
+    }
+    .item-card-table th {
+      background-color: #eaf4fd;
+      color: #333333;
+      font-weight: 600;
+      border-bottom: 1px solid #b2d7f5;
+      padding: 6px 4px;
+    }
+    .item-card-table td {
+      padding: 6px 4px;
+      border-color: #d8e6f5;
+    }
+
+    /* 下訂通知清單樣式 */
+    .order-item-card {
+      border-left: 6px solid #d9534f;
+      transition: all 0.2s ease;
+      background-color: #ffffff;
+    }
+    .order-item-card.completed {
+      border-left-color: #198754;
+      background-color: #f4f9f5;
+      opacity: 0.85;
+    }
+    .order-item-card.completed .order-text {
+      text-decoration: line-through;
+      color: #6c757d;
+    }
+
+    /* 顯眼勾選框專用按鈕區塊 */
+    .checkbox-box {
+      background-color: #f8f1e7;
+      border: 2px solid #6b5240;
+      border-radius: 10px;
+      padding: 8px 14px;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      cursor: pointer;
+      transition: all 0.2s ease;
+      min-width: 85px;
+      box-shadow: 0 2px 5px rgba(0,0,0,0.08);
+    }
+    .checkbox-box:hover {
+      background-color: #ebd2b9;
+      transform: scale(1.05);
+    }
+    .order-item-card.completed .checkbox-box {
+      background-color: #d1e7dd;
+      border-color: #198754;
+    }
+
+    .form-check-input-lg {
+      width: 2rem;
+      height: 2rem;
+      cursor: pointer;
+      border: 2.5px solid #6b5240;
+      border-radius: 6px;
+    }
+    .form-check-input-lg:checked {
+      background-color: #198754;
+      border-color: #198754;
+    }
   </style>
 </head>
 <body>
@@ -169,7 +254,13 @@
         <button class="nav-link active" id="input-tab" data-bs-toggle="tab" data-bs-target="#input-pane" type="button" role="tab">✍️ 借用品項批次輸入</button>
       </li>
       <li class="nav-item" role="presentation">
-        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-pane" type="button" role="tab" onclick="calculateMonthlySummary()">📊 月度總量統計</button>
+        <button class="nav-link" id="summary-tab" data-bs-toggle="tab" data-bs-target="#summary-pane" type="button" role="tab" onclick="renderSummaryCards()">📋 品項借用流水帳</button>
+      </li>
+      <li class="nav-item" role="presentation">
+        <button class="nav-link position-relative" id="order-tab" data-bs-toggle="tab" data-bs-target="#order-pane" type="button" role="tab" onclick="renderOrderNotifications()">
+          🔔 採購下訂通知
+          <span id="pendingBadge" class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger" style="display: none;">0</span>
+        </button>
       </li>
     </ul>
 
@@ -195,11 +286,11 @@
                   <span class="fs-6 font-monospace" style="color: var(--brand-brown);">(格式：品項名稱 數量)</span>
                 </label>
                 <textarea id="bulkInputText" class="form-control font-monospace" rows="5" placeholder="例如：
-仙梅粒大包 5
-酸梅大包1斤 2
-仙楂餅大包 10
-牛皮紙袋(大) 100
-牛皮紙袋(小) 50" oninput="parseBulkInput()"></textarea>
+仙粒 5
+酸梅 2
+梅餅 10
+大牛皮紙袋 100
+小牛皮紙袋 50" oninput="parseBulkInput()"></textarea>
                 <div class="form-text">提示：品項名稱與數量之間請用「空白」隔開即可（預設數量為 1）。</div>
               </div>
 
@@ -249,46 +340,46 @@
         </div>
       </div>
 
-      <!-- 頁籤二：月度總量統計 -->
+      <!-- 頁籤二：品項借用流水帳卡片區 -->
       <div class="tab-pane fade" id="summary-pane" role="tabpanel">
         <div class="card mb-4">
           <div class="card-body">
             <div class="row g-3 align-items-center">
-              <div class="col-md-4">
-                <label class="form-label fw-bold">選擇統計月份：</label>
-                <input type="month" id="monthPicker" class="form-control" onchange="calculateMonthlySummary()">
+              <div class="col-md-8">
+                <label class="form-label fw-bold">搜尋品項名稱：</label>
+                <input type="text" id="searchInput" class="form-control" placeholder="輸入品項名稱關鍵字搜尋..." oninput="renderSummaryCards()">
               </div>
-              <div class="col-md-5">
-                <label class="form-label">搜尋品項名稱：</label>
-                <input type="text" id="searchInput" class="form-control" placeholder="輸入品項名稱關鍵字..." oninput="renderSummaryTable()">
-              </div>
-              <div class="col-md-3 d-flex align-items-end">
-                <button class="btn btn-brand-primary w-100" onclick="exportSummaryCSV()">匯出月報表</button>
+              <div class="col-md-4 d-flex align-items-end justify-content-between gap-2">
+                <span class="badge badge-brand fs-6 py-2 px-3" id="totalSpeciesBadge">共 0 種品項</span>
+                <button class="btn btn-brand-primary" onclick="exportSummaryCSV()">匯出流水帳 CSV</button>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="m-0" id="summaryTitle">月度彙整結果</h5>
-            <span class="badge badge-brand" id="totalSpeciesBadge">共 0 種品項</span>
-          </div>
-          <div class="card-body">
-            <div class="table-responsive">
-              <table class="table table-bordered table-hover align-middle">
-                <thead class="table-light-header">
-                  <tr>
-                    <th style="width: 60px;" class="text-center">序號</th>
-                    <th>品項名稱</th>
-                    <th style="width: 160px;" class="text-center">月度總借用量</th>
-                    <th style="width: 100px;" class="text-center">次數</th>
-                  </tr>
-                </thead>
-                <tbody id="summaryTableBody"></tbody>
-              </table>
+        <div class="row g-4" id="summaryCardsContainer"></div>
+      </div>
+
+      <!-- 頁籤三：採購下訂通知區 -->
+      <div class="tab-pane fade" id="order-pane" role="tabpanel">
+        <div class="card mb-4">
+          <div class="card-body d-flex justify-content-between align-items-center flex-wrap gap-2">
+            <div>
+              <h5 class="fw-bold mb-1" style="color: var(--brand-brown);">📢 滿箱採購提醒清單</h5>
+              <p class="text-muted mb-0 small">每當借用量達標 1 箱規格，系統即會發出 1 箱的下訂提醒。</p>
+            </div>
+            <div class="d-flex align-items-center gap-3">
+              <div class="form-check form-switch m-0">
+                <input class="form-check-input" type="checkbox" id="hideCompletedSwitch" onchange="renderOrderNotifications()">
+                <label class="form-check-input-label fw-bold" for="hideCompletedSwitch" style="cursor: pointer; color: var(--brand-brown);">🙈 隱藏已完成項目</label>
+              </div>
+              <button class="btn btn-sm btn-outline-secondary" onclick="resetOrderCheckboxes()">重設所有勾選狀態</button>
             </div>
           </div>
+        </div>
+
+        <div id="orderNotificationContainer" class="d-flex flex-column gap-3">
+          <!-- 動態插入達標下訂通知卡片 -->
         </div>
       </div>
 
@@ -300,20 +391,36 @@
   <script>
     const GAS_URL = "https://script.google.com/macros/s/AKfycbwz3E-EO3dGsraL9NFGMU7sU13KaZCjrSNieWUWYEEGxYN9PiXSyaePES_qkJP0ENhzWQ/exec";
 
+    // 📦 各品項一箱數量設定 (品項名稱: 滿箱數量)
+    const ITEM_BOX_LIMITS = {
+      "梅餅": 20,
+      "酸梅": 30,
+      "梅粒": 40,
+      "大牛皮紙袋": 25,
+      "小牛皮紙袋": 50
+    };
+
+    // 未單獨設定品項的預設門檻
+    const DEFAULT_BOX_QTY = 20;
+
     let logs = [];          
-    let monthlyMap = {};    
     let parsedItems = [];   
 
     document.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       document.getElementById('batchDate').value = now.toISOString().split('T')[0];
-      
-      const year = now.getFullYear();
-      const month = String(now.getMonth() + 1).padStart(2, '0');
-      document.getElementById('monthPicker').value = `${year}-${month}`;
-
       fetchLogs();
     });
+
+    function formatDateDisplay(dateStr) {
+      if (!dateStr) return '';
+      const d = new Date(dateStr);
+      if (isNaN(d.getTime())) return dateStr;
+      const year = d.getFullYear();
+      const month = String(d.getMonth() + 1).padStart(2, '0');
+      const day = String(d.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
 
     function setLoading(isLoading) {
       document.getElementById('loadingSpinner').style.display = isLoading ? 'inline-block' : 'none';
@@ -324,9 +431,13 @@
       fetch(GAS_URL)
         .then(res => res.json())
         .then(data => {
-          logs = data;
+          logs = data.map(item => ({
+            ...item,
+            date: formatDateDisplay(item.date)
+          }));
           renderLogs();
-          calculateMonthlySummary();
+          renderSummaryCards();
+          renderOrderNotifications();
           setLoading(false);
         })
         .catch(err => {
@@ -467,6 +578,234 @@
       });
     }
 
+    function renderSummaryCards() {
+      const container = document.getElementById('summaryCardsContainer');
+      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
+      container.innerHTML = '';
+
+      const itemGroups = {};
+      logs.forEach(item => {
+        if (!item.name) return;
+        const name = item.name.trim();
+        if (!itemGroups[name]) {
+          itemGroups[name] = [];
+        }
+        itemGroups[name].push(item);
+      });
+
+      const itemNames = Object.keys(itemGroups).filter(name => {
+        return !keyword || name.toLowerCase().includes(keyword);
+      });
+
+      document.getElementById('totalSpeciesBadge').innerText = `共 ${itemNames.length} 種品項`;
+
+      if (itemNames.length === 0) {
+        container.innerHTML = `<div class="col-12 text-center text-muted py-5">尚無符合關鍵字的借用品項資料</div>`;
+        return;
+      }
+
+      itemNames.forEach(name => {
+        const records = itemGroups[name].sort((a, b) => new Date(a.date) - new Date(b.date));
+        
+        let cumulativeTotal = 0;
+        let rowsHtml = '';
+
+        records.forEach((rec, index) => {
+          const qty = parseFloat(rec.qty) || 0;
+          cumulativeTotal += qty;
+          
+          rowsHtml += `
+            <tr>
+              <td class="text-center text-secondary">${index + 1}</td>
+              <td class="text-center">${rec.date}</td>
+              <td class="text-center fw-bold">${qty}</td>
+              <td class="text-center fw-bold text-primary">${cumulativeTotal}</td>
+            </tr>
+          `;
+        });
+
+        const col = document.createElement('div');
+        col.className = 'col-md-6 col-xl-4';
+        col.innerHTML = `
+          <div class="item-card shadow-sm h-100">
+            <div class="item-card-header">
+              ${name}
+            </div>
+            <div class="table-responsive">
+              <table class="table table-bordered item-card-table text-center align-middle">
+                <thead>
+                  <tr>
+                    <th style="width: 45px;">NO.</th>
+                    <th>日期</th>
+                    <th style="width: 75px;">借用量</th>
+                    <th style="width: 75px;">總計</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${rowsHtml}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        `;
+        container.appendChild(col);
+      });
+    }
+
+    // 計算滿箱並渲染採購通知
+    function renderOrderNotifications() {
+      const container = document.getElementById('orderNotificationContainer');
+      const hideCompleted = document.getElementById('hideCompletedSwitch').checked;
+      container.innerHTML = '';
+
+      const itemGroups = {};
+      logs.forEach(item => {
+        if (!item.name) return;
+        const name = item.name.trim();
+        if (!itemGroups[name]) itemGroups[name] = [];
+        itemGroups[name].push(item);
+      });
+
+      const notifications = [];
+
+      Object.keys(itemGroups).forEach(name => {
+        const records = itemGroups[name].sort((a, b) => new Date(a.date) - new Date(b.date));
+        let currentCum = 0;
+        let reachedBoxes = 0;
+
+        const boxLimit = ITEM_BOX_LIMITS[name] || DEFAULT_BOX_QTY;
+
+        records.forEach(rec => {
+          const qty = parseFloat(rec.qty) || 0;
+          currentCum += qty;
+
+          while (currentCum >= (reachedBoxes + 1) * boxLimit) {
+            reachedBoxes++;
+            notifications.push({
+              id: `order_${name}_box_${reachedBoxes}`,
+              name: name,
+              date: rec.date,
+              boxNum: reachedBoxes,
+              totalQty: currentCum,
+              unitQty: boxLimit
+            });
+          }
+        });
+      });
+
+      notifications.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+      let pendingCount = 0;
+      let visibleCardCount = 0;
+
+      notifications.forEach(notif => {
+        const isChecked = localStorage.getItem(notif.id) === 'true';
+        if (!isChecked) pendingCount++;
+
+        // 若開啟「隱藏已完成」且該項目已勾選，則跳過顯示
+        if (hideCompleted && isChecked) return;
+
+        visibleCardCount++;
+        const dateObj = new Date(notif.date);
+        const formattedMonthDay = `${dateObj.getMonth() + 1}／${dateObj.getDate()}`;
+
+        const card = document.createElement('div');
+        card.className = `card order-item-card p-3 shadow-sm ${isChecked ? 'completed' : ''}`;
+        card.id = `card_${notif.id}`;
+        card.innerHTML = `
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="d-flex align-items-center gap-3">
+              <label class="checkbox-box" for="${notif.id}">
+                <input class="form-check-input form-check-input-lg m-0" type="checkbox" id="${notif.id}" ${isChecked ? 'checked' : ''} onchange="toggleOrderCheck('${notif.id}')">
+                <span class="fw-bold mt-1 text-center" id="txt_${notif.id}" style="font-size: 0.72rem; color: var(--brand-brown);">
+                  ${isChecked ? '已下訂' : '點我打勾'}
+                </span>
+              </label>
+              <div>
+                <div class="fs-5 fw-bold order-text">
+                  【${notif.name}】於 ${formattedMonthDay} 達標第 ${notif.boxNum} 箱，<span class="text-danger fw-bold">請通知下訂 1 箱</span>
+                </div>
+                <div class="text-muted small mt-1">
+                  達標日期：${notif.date} ｜ 包裝規格：${notif.unitQty} 包/箱 ｜ 當時累積借用總量：${notif.totalQty} 包
+                </div>
+              </div>
+            </div>
+            <span class="badge ${isChecked ? 'bg-success' : 'bg-danger'} px-3 py-2 fs-6" id="badge_${notif.id}">
+              ${isChecked ? '已完成下訂' : '待處理下訂'}
+            </span>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      if (visibleCardCount === 0) {
+        container.innerHTML = `<div class="text-center text-muted py-5">${hideCompleted ? '尚無待處理的採購通知' : '目前尚無累計滿箱的品項通知'}</div>`;
+      }
+
+      // 更新紅點數量標籤
+      const pendingBadge = document.getElementById('pendingBadge');
+      if (pendingCount > 0) {
+        pendingBadge.innerText = pendingCount;
+        pendingBadge.style.display = 'inline-block';
+      } else {
+        pendingBadge.style.display = 'none';
+      }
+    }
+
+    function toggleOrderCheck(id) {
+      const checkbox = document.getElementById(id);
+      const isChecked = checkbox.checked;
+      localStorage.setItem(id, isChecked);
+
+      const hideCompleted = document.getElementById('hideCompletedSwitch').checked;
+
+      // 若開啟了隱藏模式，勾選後重新渲染頁面以隱藏
+      if (hideCompleted) {
+        renderOrderNotifications();
+        return;
+      }
+
+      const card = document.getElementById(`card_${id}`);
+      const badge = document.getElementById(`badge_${id}`);
+      const txt = document.getElementById(`txt_${id}`);
+
+      if (isChecked) {
+        card.classList.add('completed');
+        badge.className = 'badge bg-success px-3 py-2 fs-6';
+        badge.innerText = '已完成下訂';
+        if (txt) txt.innerText = '已下訂';
+      } else {
+        card.classList.remove('completed');
+        badge.className = 'badge bg-danger px-3 py-2 fs-6';
+        badge.innerText = '待處理下訂';
+        if (txt) txt.innerText = '點我打勾';
+      }
+
+      // 重新統計未處理紅點數量
+      const allCheckboxes = document.querySelectorAll('#orderNotificationContainer input[type="checkbox"]');
+      let pending = 0;
+      allCheckboxes.forEach(cb => { if (!cb.checked) pending++; });
+
+      const pendingBadge = document.getElementById('pendingBadge');
+      if (pending > 0) {
+        pendingBadge.innerText = pending;
+        pendingBadge.style.display = 'inline-block';
+      } else {
+        pendingBadge.style.display = 'none';
+      }
+    }
+
+    function resetOrderCheckboxes() {
+      if (confirm('確定要重設所有項目的勾選狀態（恢復為待處理）嗎？')) {
+        Object.keys(localStorage).forEach(key => {
+          if (key.startsWith('order_')) {
+            localStorage.removeItem(key);
+          }
+        });
+        renderOrderNotifications();
+      }
+    }
+
     function exportToCSV() {
       if (logs.length === 0) {
         alert("目前沒有紀錄可匯出！");
@@ -480,78 +819,34 @@
       downloadCSV(csvContent, `借用品項明細紀錄_${todayStr}.csv`);
     }
 
-    function calculateMonthlySummary() {
-      const selectedMonth = document.getElementById('monthPicker').value;
-      if (!selectedMonth) return;
-
-      monthlyMap = {};
-
-      logs.forEach(item => {
-        if (item.date && item.date.startsWith(selectedMonth)) {
-          const name = item.name.trim();
-          const qty = parseFloat(item.qty) || 0;
-
-          if (!monthlyMap[name]) {
-            monthlyMap[name] = { totalQty: 0, count: 0 };
-          }
-          
-          monthlyMap[name].totalQty += qty;
-          monthlyMap[name].count += 1;
-        }
-      });
-
-      document.getElementById('summaryTitle').innerText = `${selectedMonth} 月度彙整結果`;
-      renderSummaryTable();
-    }
-
-    function renderSummaryTable() {
-      const tableBody = document.getElementById('summaryTableBody');
-      const keyword = document.getElementById('searchInput').value.trim().toLowerCase();
-      tableBody.innerHTML = '';
-
-      const itemNames = Object.keys(monthlyMap);
-      let displayIndex = 1;
-
-      if (itemNames.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">該月份尚無任何借用紀錄</td></tr>`;
-        document.getElementById('totalSpeciesBadge').innerText = `共 0 種品項`;
-        return;
-      }
-
-      itemNames.forEach(name => {
-        if (keyword && !name.toLowerCase().includes(keyword)) return;
-
-        const data = monthlyMap[name];
-
-        const tr = document.createElement('tr');
-        tr.innerHTML = `
-          <td class="text-center fw-bold text-secondary">${displayIndex++}</td>
-          <td class="fw-bold text-dark">${name}</td>
-          <td class="text-center fs-5 fw-bold" style="color: var(--brand-brown);">${data.totalQty}</td>
-          <td class="text-center text-muted">${data.count} 次</td>
-        `;
-        tableBody.appendChild(tr);
-      });
-
-      document.getElementById('totalSpeciesBadge').innerText = `共 ${displayIndex - 1} 種品項`;
-    }
-
     function exportSummaryCSV() {
-      const selectedMonth = document.getElementById('monthPicker').value;
-      const itemNames = Object.keys(monthlyMap);
-
-      if (itemNames.length === 0) {
-        alert("目前月份沒有資料可匯出！");
+      if (logs.length === 0) {
+        alert("目前沒有資料可匯出！");
         return;
       }
 
-      let csvContent = `月份,品項名稱,當月總借用數量,紀錄次數\n`;
-      itemNames.forEach(name => {
-        const data = monthlyMap[name];
-        csvContent += `"${selectedMonth}","${name}","${data.totalQty}","${data.count}"\n`;
+      const todayStr = new Date().toISOString().split('T')[0];
+      let csvContent = `品項名稱,NO.,日期,借用數量,累積總計\n`;
+      
+      const itemGroups = {};
+      logs.forEach(item => {
+        if (!item.name) return;
+        const name = item.name.trim();
+        if (!itemGroups[name]) itemGroups[name] = [];
+        itemGroups[name].push(item);
       });
 
-      downloadCSV(csvContent, `借用品項月度總量統計_${selectedMonth}.csv`);
+      Object.keys(itemGroups).forEach(name => {
+        const records = itemGroups[name].sort((a, b) => new Date(a.date) - new Date(b.date));
+        let cumulativeTotal = 0;
+        records.forEach((rec, index) => {
+          const qty = parseFloat(rec.qty) || 0;
+          cumulativeTotal += qty;
+          csvContent += `"${name}","${index + 1}","${rec.date}","${qty}","${cumulativeTotal}"\n`;
+        });
+      });
+
+      downloadCSV(csvContent, `品項借用流水帳匯總_${todayStr}.csv`);
     }
 
     function downloadCSV(csvContent, fileName) {
