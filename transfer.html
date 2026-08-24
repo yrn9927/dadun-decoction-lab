@@ -4,6 +4,12 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大墩水藥室管理系統 - 風澤醫療體系</title>
+  <!-- 引入 Tailwind CSS 與 Vue.js --><!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <!-- 引入 Tailwind CSS 與 Vue.js -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -241,7 +247,10 @@
     createApp({
       setup() {
         const currentTab = ref('input');
-        const todayStr = new Date().toISOString().split('T')[0];
+        
+        // 修正為在地時間（解決早晨 UTC 時區導致顯示為昨天的問題）
+        const now = new Date();
+        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
         const currentMonthStr = todayStr.substring(0, 7);
         
         const orderDate = ref(todayStr);
