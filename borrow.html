@@ -27,7 +27,6 @@
       padding: 20px;
     }
 
-    /* 頂部 Header 樣式 */
     .brand-header {
       background-color: #ffffff;
       border: 1px solid var(--border-color);
@@ -51,7 +50,6 @@
       letter-spacing: 0.5px;
     }
 
-    /* 按鈕與標籤 */
     .btn-home {
       background-color: #ffffff;
       color: var(--text-primary);
@@ -80,7 +78,6 @@
       font-weight: 500;
     }
 
-    /* 卡片與容器 */
     .main-container {
       background-color: #ffffff;
       border: 1px solid var(--border-color);
@@ -99,7 +96,6 @@
       font-weight: 600;
     }
 
-    /* 頁籤 Nav Tabs */
     .nav-tabs {
       border-bottom: 2px solid var(--border-color);
     }
@@ -117,7 +113,6 @@
       border-bottom: 3px solid var(--brand-brown);
     }
 
-    /* 按鈕樣式重設 */
     .btn-brand-primary {
       background-color: var(--brand-sage);
       color: #ffffff;
@@ -136,35 +131,9 @@
       color: #ffffff;
     }
 
-    /* 表格與 Badge 樣式 */
     .table-light-header th {
       background-color: var(--accent-light);
       color: var(--text-primary);
-    }
-    .vendor-badge {
-      display: inline-block;
-      background-color: var(--badge-bg);
-      color: var(--text-primary);
-      border: 1px solid #e2d8c8;
-      padding: 3px 8px;
-      margin: 2px;
-      border-radius: 4px;
-      font-size: 0.88rem;
-    }
-    .badge-pending {
-      background-color: #fcefdc;
-      color: #8c5b18;
-      border: 1px solid #f3d4a4;
-    }
-
-    /* 借用 Badge 樣式 */
-    .badge-borrow {
-      background-color: #fef3c7;
-      color: #92400e;
-      border: 1px solid #fde68a;
-      padding: 4px 10px;
-      border-radius: 4px;
-      font-weight: 600;
     }
 
     .preview-box {
@@ -177,7 +146,6 @@
 </head>
 <body>
 
-  <!-- 頂部品牌抬頭列 -->
   <header class="brand-header mb-4 d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-3">
       <img src="logo.png" alt="風澤醫療體系 LOGO" class="brand-logo">
@@ -196,7 +164,6 @@
   </header>
 
   <div class="main-container">
-    <!-- 功能切換頁籤 (Tabs) -->
     <ul class="nav nav-tabs mb-4" id="mainTab" role="tablist">
       <li class="nav-item" role="presentation">
         <button class="nav-link active" id="input-tab" data-bs-toggle="tab" data-bs-target="#input-pane" type="button" role="tab">✍️ 借用品項批次輸入</button>
@@ -206,41 +173,36 @@
       </li>
     </ul>
 
-    <!-- 頁籤內容區域 -->
     <div class="tab-content" id="mainTabContent">
 
-      <!-- ================= 頁籤一：輸入與歷史紀錄 ================= -->
+      <!-- 頁籤一：輸入與歷史紀錄 -->
       <div class="tab-pane fade show active" id="input-pane" role="tabpanel">
-        
-        <!-- 新增批次資料表單 -->
         <div class="card mb-4">
           <div class="card-header d-flex justify-content-between align-items-center">
-            <h5 class="m-0">輸入區</h5>
-            <span class="text-muted small">預設類型皆為【借用】</span>
+            <h5 class="m-0">借用品項輸入區</h5>
           </div>
           <div class="card-body">
             <form id="batchForm">
               <div class="row mb-3">
                 <div class="col-md-12">
-                  <label class="form-label fw-bold">借用/紀錄日期</label>
+                  <label class="form-label fw-bold">借用日期</label>
                   <input type="date" id="batchDate" class="form-control" required>
                 </div>
               </div>
 
               <div class="mb-3">
                 <label class="form-label fw-bold">文字批次輸入框 
-                  <span class="fs-6 font-monospace" style="color: var(--brand-brown);">(格式：品項名稱 數量 廠商名稱[選填])</span>
+                  <span class="fs-6 font-monospace" style="color: var(--brand-brown);">(格式：品項名稱 數量)</span>
                 </label>
                 <textarea id="bulkInputText" class="form-control font-monospace" rows="5" placeholder="例如：
 仙梅粒大包 5
-酸梅大包1斤 2 
+酸梅大包1斤 2
 仙楂餅大包 10
 牛皮紙袋(大) 100
-牛皮紙袋(小) 50 " oninput="parseBulkInput()"></textarea>
-                <div class="form-text">提示：系統預設類型全數為「借用」。品項名稱、數量與廠商之間請用「空白」隔開即可。</div>
+牛皮紙袋(小) 50" oninput="parseBulkInput()"></textarea>
+                <div class="form-text">提示：品項名稱與數量之間請用「空白」隔開即可（預設數量為 1）。</div>
               </div>
 
-              <!-- 即時解析預覽區域 -->
               <div id="previewArea" class="preview-box mb-3" style="display: none;">
                 <h6 class="fw-bold mb-2" style="color: var(--brand-brown);">🔍 即時解析結果預覽：</h6>
                 <div class="table-responsive">
@@ -248,14 +210,10 @@
                     <thead class="table-light-header">
                       <tr>
                         <th>品項名稱</th>
-                        <th style="width: 100px;" class="text-center">類型</th>
-                        <th style="width: 90px;" class="text-center">數量</th>
-                        <th>到貨狀態</th>
+                        <th style="width: 120px;" class="text-center">數量</th>
                       </tr>
                     </thead>
-                    <tbody id="previewTableBody">
-                      <!-- 動態渲染預覽結果 -->
-                    </tbody>
+                    <tbody id="previewTableBody"></tbody>
                   </table>
                 </div>
               </div>
@@ -265,7 +223,6 @@
           </div>
         </div>
 
-        <!-- 歷史紀錄 -->
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0">雲端同步歷史紀錄</h5>
@@ -280,27 +237,20 @@
                 <thead>
                   <tr>
                     <th>借用日期</th>
-                    <th class="text-center">類型</th>
                     <th>品項名稱</th>
-                    <th>數量</th>
-                    <th>到貨日期</th>
+                    <th style="width: 120px;">數量</th>
                     <th style="width: 150px;" class="text-center">紀錄操作</th>
                   </tr>
                 </thead>
-                <tbody id="logTableBody">
-                  <!-- 歷史紀錄 -->
-                </tbody>
+                <tbody id="logTableBody"></tbody>
               </table>
             </div>
           </div>
         </div>
-
       </div>
 
-      <!-- ================= 頁籤二：月度總量統計 ================= -->
+      <!-- 頁籤二：月度總量統計 -->
       <div class="tab-pane fade" id="summary-pane" role="tabpanel">
-        
-        <!-- 篩選與工具列 -->
         <div class="card mb-4">
           <div class="card-body">
             <div class="row g-3 align-items-center">
@@ -319,7 +269,6 @@
           </div>
         </div>
 
-        <!-- 月度總量統計表格 -->
         <div class="card">
           <div class="card-header d-flex justify-content-between align-items-center">
             <h5 class="m-0" id="summaryTitle">月度彙整結果</h5>
@@ -331,20 +280,16 @@
                 <thead class="table-light-header">
                   <tr>
                     <th style="width: 60px;" class="text-center">序號</th>
-                    <th style="width: 220px;">品項名稱</th>
-                    <th style="width: 140px;" class="text-center">月度總借用量</th>
-                    <th>廠商細項數量彙整</th>
-                    <th style="width: 90px;" class="text-center">次數</th>
+                    <th>品項名稱</th>
+                    <th style="width: 160px;" class="text-center">月度總借用量</th>
+                    <th style="width: 100px;" class="text-center">次數</th>
                   </tr>
                 </thead>
-                <tbody id="summaryTableBody">
-                  <!-- 自動統計繪製 -->
-                </tbody>
+                <tbody id="summaryTableBody"></tbody>
               </table>
             </div>
           </div>
         </div>
-
       </div>
 
     </div>
@@ -394,7 +339,6 @@
       const rawText = document.getElementById('bulkInputText').value;
       const lines = rawText.split('\n');
       const date = document.getElementById('batchDate').value;
-      const todayStr = new Date().toISOString().split('T')[0];
 
       parsedItems = [];
       const previewTableBody = document.getElementById('previewTableBody');
@@ -404,50 +348,27 @@
         let trimmed = line.trim();
         if (!trimmed) return;
 
-        let itemType = "借用";
-        
-        if (trimmed.includes("借用") || trimmed.includes("借")) {
-          trimmed = trimmed.replace(/借用|借/g, ' ').replace(/\s+/g, ' ').trim();
-        }
-
         const parts = trimmed.split(/\s+/).filter(Boolean);
         if (parts.length === 0) return;
 
         const name = parts[0];
         let qty = 1;
-        let vendorInput = "";
 
-        if (parts.length >= 2) {
-          if (!isNaN(parts[1])) {
-            qty = parts[1];
-            if (parts.length >= 3) {
-              vendorInput = parts.slice(2).join(" ");
-            }
-          } else {
-            vendorInput = parts.slice(1).join(" ");
-          }
-        }
-
-        let vendorText = "待到貨通知";
-        if (vendorInput) {
-          vendorText = `${vendorInput} (${todayStr} 到貨)`;
+        if (parts.length >= 2 && !isNaN(parts[1])) {
+          qty = parts[1];
         }
 
         parsedItems.push({
           id: Date.now() + "_" + Math.floor(Math.random() * 10000),
           date: date,
-          type: itemType,
           name: name,
-          qty: qty,
-          vendor: vendorText
+          qty: qty
         });
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="fw-bold">${name}</td>
-          <td class="text-center"><span class="badge-borrow">${itemType}</span></td>
           <td class="text-center">${qty}</td>
-          <td><span class="badge ${vendorInput ? 'vendor-badge' : 'badge-pending'}">${vendorText}</span></td>
         `;
         previewTableBody.appendChild(tr);
       });
@@ -489,34 +410,6 @@
       });
     });
 
-    function updateVendor(logId) {
-      const log = logs.find(item => item.id == logId);
-      if (!log) return;
-
-      const todayStr = new Date().toISOString().split('T')[0];
-      let currentVendor = "";
-      let currentDate = todayStr;
-
-      if (log.vendor && log.vendor !== "待到貨通知") {
-        const match = log.vendor.match(/^(.*?)\s*\((.*?) 到貨\)$/);
-        if (match) {
-          currentVendor = match[1];
-          currentDate = match[2];
-        } else {
-          currentVendor = log.vendor;
-        }
-      }
-
-      const newVendor = prompt(`請輸入【${log.name}】的實際到貨廠商名稱：`, currentVendor);
-      if (newVendor === null || newVendor.trim() === "") return;
-
-      const newArriveDate = prompt(`請輸入【${log.name}】的實際到貨日期 (格式：YYYY-MM-DD)：`, currentDate);
-      if (newArriveDate === null || newArriveDate.trim() === "") return;
-
-      const updatedVendorStr = `${newVendor.trim()} (${newArriveDate.trim()} 到貨)`;
-      sendUpdateToGAS(log.id, log.type || '借用', log.name, log.qty, updatedVendorStr);
-    }
-
     function editLogItem(logId) {
       const log = logs.find(item => item.id == logId);
       if (!log) return;
@@ -527,14 +420,14 @@
       const newQty = prompt(`請修改數量：`, log.qty);
       if (newQty === null || newQty.trim() === "" || isNaN(newQty)) return;
 
-      sendUpdateToGAS(log.id, "借用", newName.trim(), newQty.trim(), log.vendor);
+      sendUpdateToGAS(log.id, newName.trim(), newQty.trim());
     }
 
-    function sendUpdateToGAS(id, type, name, qty, vendor) {
+    function sendUpdateToGAS(id, name, qty) {
       setLoading(true);
       fetch(GAS_URL, {
         method: "POST",
-        body: JSON.stringify({ action: "update", id: id, type: type || '借用', name: name, qty: qty, vendor: vendor })
+        body: JSON.stringify({ action: "update", id: id, name: name, qty: qty })
       })
       .then(res => res.json())
       .then(() => fetchLogs());
@@ -560,21 +453,11 @@
       logTableBody.innerHTML = '';
       
       logs.forEach(log => {
-        const isPending = log.vendor === "待到貨通知";
-        const itemType = log.type || "借用";
-
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${log.date}</td>
-          <td class="text-center"><span class="badge-borrow">${itemType}</span></td>
           <td class="fw-bold">${log.name}</td>
           <td>${log.qty}</td>
-          <td>
-            <span class="badge ${isPending ? 'badge-pending' : 'vendor-badge'}">${log.vendor}</span>
-            <button class="btn btn-sm btn-link p-0 ms-1 text-decoration-none" style="color: var(--brand-brown);" onclick="updateVendor('${log.id}')">
-              ${isPending ? '✏️ 補填到貨資訊' : '✏️ 修改廠商/日期'}
-            </button>
-          </td>
           <td class="text-center">
             <button class="btn btn-sm btn-outline-brand py-0 px-1 me-1" onclick="editLogItem('${log.id}')">✏️ 編輯</button>
             <button class="btn btn-sm btn-outline-danger py-0 px-1" onclick="deleteLogItem('${log.id}')">🗑️ 刪除</button>
@@ -590,9 +473,9 @@
         return;
       }
       const todayStr = new Date().toISOString().split('T')[0];
-      let csvContent = "借用日期,類型,品項名稱,數量,廠商狀態與到貨日期\n";
+      let csvContent = "借用日期,品項名稱,數量\n";
       logs.forEach(log => {
-        csvContent += `"${log.date}","${log.type || '借用'}","${log.name}","${log.qty}","${log.vendor}"\n`;
+        csvContent += `"${log.date}","${log.name}","${log.qty}"\n`;
       });
       downloadCSV(csvContent, `借用品項明細紀錄_${todayStr}.csv`);
     }
@@ -607,24 +490,13 @@
         if (item.date && item.date.startsWith(selectedMonth)) {
           const name = item.name.trim();
           const qty = parseFloat(item.qty) || 0;
-          
-          let vendorName = "待到貨通知";
-          if (item.vendor && item.vendor.trim() !== "待到貨通知") {
-            const match = item.vendor.match(/^(.*?)\s*\(/);
-            vendorName = match ? match[1].trim() : item.vendor.trim();
-          }
 
           if (!monthlyMap[name]) {
-            monthlyMap[name] = { totalQty: 0, count: 0, vendors: {} };
+            monthlyMap[name] = { totalQty: 0, count: 0 };
           }
           
           monthlyMap[name].totalQty += qty;
           monthlyMap[name].count += 1;
-
-          if (!monthlyMap[name].vendors[vendorName]) {
-            monthlyMap[name].vendors[vendorName] = 0;
-          }
-          monthlyMap[name].vendors[vendorName] += qty;
         }
       });
 
@@ -641,7 +513,7 @@
       let displayIndex = 1;
 
       if (itemNames.length === 0) {
-        tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">該月份尚無任何借用紀錄</td></tr>`;
+        tableBody.innerHTML = `<tr><td colspan="4" class="text-center text-muted">該月份尚無任何借用紀錄</td></tr>`;
         document.getElementById('totalSpeciesBadge').innerText = `共 0 種品項`;
         return;
       }
@@ -650,22 +522,12 @@
         if (keyword && !name.toLowerCase().includes(keyword)) return;
 
         const data = monthlyMap[name];
-        
-        let vendorBadgesHtml = '';
-        Object.keys(data.vendors).forEach(vName => {
-          const vQty = data.vendors[vName];
-          const isPending = vName === "待到貨通知";
-          const badgeClass = isPending ? 'badge-pending' : 'vendor-badge';
-          
-          vendorBadgesHtml += `<span class="badge ${badgeClass} me-1">${vName}: <b>${vQty}</b></span>`;
-        });
 
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td class="text-center fw-bold text-secondary">${displayIndex++}</td>
           <td class="fw-bold text-dark">${name}</td>
           <td class="text-center fs-5 fw-bold" style="color: var(--brand-brown);">${data.totalQty}</td>
-          <td>${vendorBadgesHtml}</td>
           <td class="text-center text-muted">${data.count} 次</td>
         `;
         tableBody.appendChild(tr);
@@ -683,14 +545,10 @@
         return;
       }
 
-      let csvContent = `月份,品項名稱,當月總借用數量,廠商統計細項,紀錄次數\n`;
+      let csvContent = `月份,品項名稱,當月總借用數量,紀錄次數\n`;
       itemNames.forEach(name => {
         const data = monthlyMap[name];
-        const vendorDetailStr = Object.keys(data.vendors)
-          .map(v => `${v}: ${data.vendors[v]}`)
-          .join(" | ");
-
-        csvContent += `"${selectedMonth}","${name}","${data.totalQty}","${vendorDetailStr}","${data.count}"\n`;
+        csvContent += `"${selectedMonth}","${name}","${data.totalQty}","${data.count}"\n`;
       });
 
       downloadCSV(csvContent, `借用品項月度總量統計_${selectedMonth}.csv`);
