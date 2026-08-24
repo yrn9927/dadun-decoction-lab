@@ -342,13 +342,19 @@
     let monthlyMap = {};    
     let parsedItems = [];   
 
-    document.addEventListener("DOMContentLoaded", () => {
+    // 取得在地時區格式化日期 (YYYY-MM-DD)
+    function getLocalDateStr() {
       const now = new Date();
-      document.getElementById('batchDate').value = now.toISOString().split('T')[0];
-      
       const year = now.getFullYear();
       const month = String(now.getMonth() + 1).padStart(2, '0');
-      document.getElementById('monthPicker').value = `${year}-${month}`;
+      const day = String(now.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const todayStr = getLocalDateStr();
+      document.getElementById('batchDate').value = todayStr;
+      document.getElementById('monthPicker').value = todayStr.substring(0, 7);
 
       fetchLogs();
     });
@@ -377,7 +383,7 @@
       const rawText = document.getElementById('bulkInputText').value;
       const lines = rawText.split('\n');
       const date = document.getElementById('batchDate').value;
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateStr();
 
       parsedItems = [];
       const previewTableBody = document.getElementById('previewTableBody');
@@ -466,7 +472,7 @@
       const log = logs.find(item => item.id == logId);
       if (!log) return;
 
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateStr();
       let currentVendor = "";
       let currentDate = todayStr;
 
@@ -559,7 +565,7 @@
         alert("目前沒有紀錄可匯出！");
         return;
       }
-      const todayStr = new Date().toISOString().split('T')[0];
+      const todayStr = getLocalDateStr();
       let csvContent = "調撥申請日期,藥材名稱,調撥數量,廠商狀態與到貨日期\n";
       logs.forEach(log => {
         csvContent += `"${log.date}","${log.name}","${log.qty}","${log.vendor}"\n`;
