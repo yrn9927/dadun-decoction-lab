@@ -195,10 +195,20 @@
 
         <!-- 統計總覽 -->
         <div>
-          <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm">
-            <span>📊 品項累積總數匯整</span>
-            <span class="text-xs font-normal text-gray-500">（根據所選篩選條件自動即時計算）</span>
-          </h3>
+          <div class="flex flex-wrap justify-between items-center mb-3 gap-2">
+            <h3 class="font-bold text-brand-800 flex items-center gap-2 text-sm">
+              <span>📊 品項累積總數匯整</span>
+              <span class="text-xs font-normal text-gray-500">（根據所選篩選條件自動即時計算）</span>
+            </h3>
+            <div class="flex gap-2">
+              <button @click="copyQuantities" class="text-xs bg-brand-600 hover:bg-brand-700 text-white px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer flex items-center gap-1">
+                📋 一鍵複製整欄數量
+              </button>
+              <button @click="exportCSV" class="text-xs bg-emerald-600 hover:bg-emerald-700 text-white px-3 py-1.5 rounded-md font-bold transition-colors cursor-pointer flex items-center gap-1">
+                📥 匯出排序好的 CSV
+              </button>
+            </div>
+          </div>
           <div class="border border-brand-200 rounded-xl overflow-hidden shadow-2xs">
             <table class="w-full border-collapse text-left">
               <thead>
@@ -371,10 +381,34 @@
           return summary;
         });
 
+        const copyQuantities = () => {
+          const textToCopy = rawItems.map(name => totalSummary.value[name] || 0).join('\n');
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('已成功複製整欄數量！\n請打開 Excel 點選第一個數量格（例如 B2），按 Ctrl+V 即可直接貼上。');
+          }).catch(() => {
+            alert('複製失敗，請確認瀏覽器權限！');
+          });
+        };
+
+        const exportCSV = () => {
+          let csvContent = "\uFEFF品項名稱,總數量\n";
+          rawItems.forEach(name => {
+            const qty = totalSummary.value[name] || 0;
+            csvContent += `"${name}",${qty}\n`;
+          });
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute('download', `水藥調撥總數彙整_${selectedMonth.value || '全部'}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
+
         return {
           currentTab, orderDate, fromClinic, toClinic, searchKeyword, selectedMonth, selectedItem, items, activeItemsCount,
           filteredItems, submitOrder, dbLogs, filteredGroupedLogs, editLogQty, deleteLog, totalSummary,
-          loading, submitting, fetchLogs
+          loading, submitting, fetchLogs, copyQuantities, exportCSV
         };
       }
     }).mount('#app');
