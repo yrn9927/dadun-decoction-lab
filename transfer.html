@@ -224,14 +224,14 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-brand-100 bg-white text-sm">
-                <tr v-for="(total, name) in totalSummary" :key="name" class="hover:bg-brand-50/50 transition-colors">
-                  <td class="p-3 font-medium text-brand-800">{{ name }}</td>
-                  <td class="p-3 text-right text-brand-600 font-bold text-base">{{ total }}</td>
-                </tr>
-                <tr v-if="Object.keys(totalSummary).length === 0">
-                  <td colspan="2" class="p-6 text-center text-gray-400">當前篩選條件下無資料</td>
-                </tr>
-              </tbody>
+  <tr v-for="item in sortedTotalSummary" :key="item.name" class="hover:bg-brand-50/50 transition-colors">
+    <td class="p-3 font-medium text-brand-800">{{ item.name }}</td>
+    <td class="p-3 text-right text-brand-600 font-bold text-base">{{ item.total }}</td>
+  </tr>
+  <tr v-if="sortedTotalSummary.length === 0">
+    <td colspan="2" class="p-6 text-center text-gray-400">當前篩選條件下無資料</td>
+  </tr>
+</tbody>
             </table>
           </div>
         </div>
@@ -375,44 +375,69 @@
           }
         };
 
-        const totalSummary = computed(() => {
-          const summary = {};
-          const itemKey = selectedItem.value.trim().toLowerCase();
+        // 1. 基礎數據統計 Map
+const totalSummaryMap = computed(() => {
+  const summary = {};
+  const itemKey = selectedItem.value.trim().toLowerCase();
 
-          dbLogs.value.forEach(log => {
-            const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
-            const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
+  dbLogs.value.forEach(log => {
+    const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
+    const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
 
-            if (matchMonth && matchItem) {
-              summary[log.name] = (summary[log.name] || 0) + Number(log.qty);
-            }
-          });
-          return summary;
-        });
+    if (matchMonth && matchItem) {
+      summary[log.name] = (summary[log.name] || 0) + Number(log.qty);
+    }
+  });
+  return summary;
+});
 
-        const copyQuantities = () => {
-          const textToCopy = rawItems.map(name => totalSummary.value[name] || 0).join('\n');
-          navigator.clipboard.writeText(textToCopy).then(() => {
-            alert('已成功複製整欄數量！\n請打開 Excel 點選第一個數量格（例如 B2），按 Ctrl+V 即可直接貼上。');
-          }).catch(() => {
-            alert('複製失敗，請確認瀏覽器權限！');
-          });
-        };
+// 2. 嚴格對照 rawItems (Excel 順序) 進行排序顯示
+const sortedTotalSummary = computed(() => {
+  const list = [];
+  const map = totalSummaryMap.value;
 
-        const exportCSV = () => {
-          let csvContent = "\uFEFF品項名稱,總數量\n";
-          rawItems.forEach(name => {
-            const qty = totalSummary.value[name] || 0;
-            csvContent += `"${name}",${qty}\n`;
-          });
-          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-          const link = document.createElement('a');
-          link.href = URL.createObjectURL(blob);
-          link.setAttribute('download', `水藥調撥總數彙整_${selectedMonth.value || '全部'}.csv`);
-          document.body.appendChild(link);
-          link.click();
-          document.body.removeChild(link);
-        };
+  // 依據 Excel (rawItems) 順序，僅列出有數量的品項
+  rawItems.forEach(name => {
+    if (map[name] !== undefined) {
+      list.push({ name, total: map[name] });
+    }
+  });
+
+  // 若有不在 rawItems 清單內的品項，自動排至最後
+  Object.keys(map).forEach(name => {
+    if (!rawItems.includes(name)) {
+      list.push({ name, total: map[name] });
+    }
+  });
+
+  return list;
+});
+
+// 3. 一鍵複製功能（維持對應 rawItems 儲存格順序）
+const copyQuantities = () => {
+  const textToCopy = rawItems.map(name => totalSummaryMap.value[name] || 0).join('\n');
+  navigator.clipboard.writeText(textToCopy).then(() => {
+    alert('已成功複製整欄數量！\n請打開 Excel 點選第一個數量格（例如 B2），按 Ctrl+V 即可直接貼上。');
+  }).catch(() => {
+    alert('複製失敗，請確認瀏覽器權限！');
+  });
+};
+
+// 4. 匯出 CSV 功能
+const exportCSV = () => {
+  let csvContent = "\uFEFF品項名稱,總數量\n";
+  rawItems.forEach(name => {
+    const qty = totalSummaryMap.value[name] || 0;
+    csvContent += `"${name}",${qty}\n`;
+  });
+  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+  const link = document.createElement('a');
+  link.href = URL.createObjectURL(blob);
+  link.setAttribute('download', `水藥調撥總數彙整_${selectedMonth.value || '全部'}.csv`);
+  document.body.appendChild(link);
+  link.click();
+  document.body.removeChild(link);
+};
 
         return {
           currentTab, orderDate, fromClinic, toClinic, searchKeyword, selectedMonth, selectedItem, items, activeItemsCount,
