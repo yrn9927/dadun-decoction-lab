@@ -4,12 +4,6 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>大墩水藥室管理系統 - 風澤醫療體系</title>
-  <!-- 引入 Tailwind CSS 與 Vue.js --><!DOCTYPE html>
-<html lang="zh-TW">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <!-- 引入 Tailwind CSS 與 Vue.js -->
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
@@ -146,17 +140,30 @@
           </button>
         </div>
         
-        <!-- 月份與單品項複合過濾器 -->
-        <div class="flex flex-col sm:flex-row items-start sm:items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-200 w-full lg:w-auto">
-          <div class="flex items-center gap-2">
-            <label class="text-xs font-bold text-brand-700 shrink-0">📅 查詢月份：</label>
-            <input type="month" v-model="selectedMonth" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
+        <!-- 複合過濾器區塊：包含日期範圍、院所與單品項 -->
+        <div class="flex flex-wrap items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-200 w-full">
+          <!-- 日期起訖 -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs font-bold text-brand-700 shrink-0">📅 日期起訖：</label>
+            <input type="date" v-model="startDate" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
+            <span class="text-xs text-brand-600">~</span>
+            <input type="date" v-model="endDate" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
           </div>
-          <div class="flex items-center gap-2 w-full sm:w-auto">
-            <label class="text-xs font-bold text-brand-700 shrink-0">💊 單品項查詢：</label>
-            <input type="text" v-model="selectedItem" placeholder="輸入品項名稱關鍵字" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400 w-full sm:w-40">
+
+          <!-- 調入院所 -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs font-bold text-brand-700 shrink-0">🏥 調入院所：</label>
+            <input type="text" v-model="selectedClinic" placeholder="如：大里、福科" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400 w-32">
           </div>
-          <button @click="selectedMonth = ''; selectedItem = ''" class="text-xs bg-white hover:bg-brand-100 border border-brand-200 px-2.5 py-1.5 rounded-md font-medium text-brand-700 shrink-0 transition-colors">
+
+          <!-- 單品項查詢 -->
+          <div class="flex items-center gap-1.5">
+            <label class="text-xs font-bold text-brand-700 shrink-0">💊 單品項：</label>
+            <input type="text" v-model="selectedItem" placeholder="輸入品項關鍵字" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400 w-36">
+          </div>
+
+          <!-- 重置按鈕 -->
+          <button @click="resetFilters" class="text-xs bg-white hover:bg-brand-100 border border-brand-200 px-2.5 py-1.5 rounded-md font-medium text-brand-700 shrink-0 transition-colors ml-auto">
             重置篩選
           </button>
         </div>
@@ -172,7 +179,8 @@
         <div class="mb-8">
           <h3 class="font-bold text-brand-800 mb-3 flex items-center gap-2 text-sm flex-wrap">
             <span>📅 調撥紀錄明細</span>
-            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedMonth">月份：{{ selectedMonth }}</span>
+            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="startDate || endDate">日期：{{ startDate || '不限' }} ~ {{ endDate || '不限' }}</span>
+            <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedClinic">院所：{{ selectedClinic }}</span>
             <span class="text-xs bg-brand-50 px-2 py-0.5 rounded text-brand-600 border border-brand-200" v-if="selectedItem">品項：{{ selectedItem }}</span>
           </h3>
 
@@ -224,14 +232,14 @@
                 </tr>
               </thead>
               <tbody class="divide-y divide-brand-100 bg-white text-sm">
-  <tr v-for="item in sortedTotalSummary" :key="item.name" class="hover:bg-brand-50/50 transition-colors">
-    <td class="p-3 font-medium text-brand-800">{{ item.name }}</td>
-    <td class="p-3 text-right text-brand-600 font-bold text-base">{{ item.total }}</td>
-  </tr>
-  <tr v-if="sortedTotalSummary.length === 0">
-    <td colspan="2" class="p-6 text-center text-gray-400">當前篩選條件下無資料</td>
-  </tr>
-</tbody>
+                <tr v-for="item in sortedTotalSummary" :key="item.name" class="hover:bg-brand-50/50 transition-colors">
+                  <td class="p-3 font-medium text-brand-800">{{ item.name }}</td>
+                  <td class="p-3 text-right text-brand-600 font-bold text-base">{{ item.total }}</td>
+                </tr>
+                <tr v-if="sortedTotalSummary.length === 0">
+                  <td colspan="2" class="p-6 text-center text-gray-400">當前篩選條件下無資料</td>
+                </tr>
+              </tbody>
             </table>
           </div>
         </div>
@@ -248,16 +256,19 @@
       setup() {
         const currentTab = ref('input');
         
-        // 修正為在地時間（解決早晨 UTC 時區導致顯示為昨天的問題）
+        // 修正為在地時間
         const now = new Date();
         const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
-        const currentMonthStr = todayStr.substring(0, 7);
         
         const orderDate = ref(todayStr);
         const fromClinic = ref('南竹水藥室');
         const toClinic = ref('大墩水藥室');
         const searchKeyword = ref('');
-        const selectedMonth = ref(currentMonthStr);
+        
+        // 篩選變數
+        const startDate = ref('');
+        const endDate = ref('');
+        const selectedClinic = ref('');
         const selectedItem = ref('');
         const loading = ref(false);
         const submitting = ref(false);
@@ -332,15 +343,27 @@
           }
         };
 
+        // 依據條件過濾並依照「日期降序」排列紀錄明細
         const filteredGroupedLogs = computed(() => {
           const groups = {};
           const itemKey = selectedItem.value.trim().toLowerCase();
+          const clinicKey = selectedClinic.value.trim().toLowerCase();
 
-          dbLogs.value.forEach(log => {
-            const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
+          // 先將紀錄依照日期最新排至最前
+          const sortedLogs = [...dbLogs.value].sort((a, b) => new Date(b.date) - new Date(a.date));
+
+          sortedLogs.forEach(log => {
+            const logDate = String(log.date || '');
+            const matchStart = !startDate.value || logDate >= startDate.value;
+            const matchEnd = !endDate.value || logDate <= endDate.value;
+
+            const fromC = String(log.fromClinic || log.source || '').toLowerCase();
+            const toC = String(log.toClinic || log.target || log.clinic || '').toLowerCase();
+            const matchClinic = !clinicKey || fromC.includes(clinicKey) || toC.includes(clinicKey);
+
             const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
 
-            if (matchMonth && matchItem) {
+            if (matchStart && matchEnd && matchClinic && matchItem) {
               const key = `${log.date}_${log.fromClinic}_${log.toClinic}`;
               if (!groups[key]) groups[key] = [];
               groups[key].push(log);
@@ -348,6 +371,13 @@
           });
           return groups;
         });
+
+        const resetFilters = () => {
+          startDate.value = '';
+          endDate.value = '';
+          selectedClinic.value = '';
+          selectedItem.value = '';
+        };
 
         const editLogQty = async (log) => {
           const newQtyStr = prompt(`修改「${log.name}」的調撥數量：`, log.qty);
@@ -375,75 +405,81 @@
           }
         };
 
-        // 1. 基礎數據統計 Map
-const totalSummaryMap = computed(() => {
-  const summary = {};
-  const itemKey = selectedItem.value.trim().toLowerCase();
+        // 1. 基礎數據統計 Map（同步支援日期與院所篩選）
+        const totalSummaryMap = computed(() => {
+          const summary = {};
+          const itemKey = selectedItem.value.trim().toLowerCase();
+          const clinicKey = selectedClinic.value.trim().toLowerCase();
 
-  dbLogs.value.forEach(log => {
-    const matchMonth = !selectedMonth.value || String(log.date).startsWith(selectedMonth.value);
-    const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
+          dbLogs.value.forEach(log => {
+            const logDate = String(log.date || '');
+            const matchStart = !startDate.value || logDate >= startDate.value;
+            const matchEnd = !endDate.value || logDate <= endDate.value;
 
-    if (matchMonth && matchItem) {
-      summary[log.name] = (summary[log.name] || 0) + Number(log.qty);
-    }
-  });
-  return summary;
-});
+            const fromC = String(log.fromClinic || log.source || '').toLowerCase();
+            const toC = String(log.toClinic || log.target || log.clinic || '').toLowerCase();
+            const matchClinic = !clinicKey || fromC.includes(clinicKey) || toC.includes(clinicKey);
 
-// 2. 嚴格對照 rawItems (Excel 順序) 進行排序顯示
-const sortedTotalSummary = computed(() => {
-  const list = [];
-  const map = totalSummaryMap.value;
+            const matchItem = !itemKey || log.name.toLowerCase().includes(itemKey);
 
-  // 依據 Excel (rawItems) 順序，僅列出有數量的品項
-  rawItems.forEach(name => {
-    if (map[name] !== undefined) {
-      list.push({ name, total: map[name] });
-    }
-  });
+            if (matchStart && matchEnd && matchClinic && matchItem) {
+              summary[log.name] = (summary[log.name] || 0) + Number(log.qty);
+            }
+          });
+          return summary;
+        });
 
-  // 若有不在 rawItems 清單內的品項，自動排至最後
-  Object.keys(map).forEach(name => {
-    if (!rawItems.includes(name)) {
-      list.push({ name, total: map[name] });
-    }
-  });
+        // 2. 嚴格對照 rawItems (Excel 順序) 進行排序顯示
+        const sortedTotalSummary = computed(() => {
+          const list = [];
+          const map = totalSummaryMap.value;
 
-  return list;
-});
+          rawItems.forEach(name => {
+            if (map[name] !== undefined) {
+              list.push({ name, total: map[name] });
+            }
+          });
 
-// 3. 一鍵複製功能（維持對應 rawItems 儲存格順序）
-const copyQuantities = () => {
-  const textToCopy = rawItems.map(name => totalSummaryMap.value[name] || 0).join('\n');
-  navigator.clipboard.writeText(textToCopy).then(() => {
-    alert('已成功複製整欄數量！\n請打開 Excel 點選第一個數量格（例如 B2），按 Ctrl+V 即可直接貼上。');
-  }).catch(() => {
-    alert('複製失敗，請確認瀏覽器權限！');
-  });
-};
+          Object.keys(map).forEach(name => {
+            if (!rawItems.includes(name)) {
+              list.push({ name, total: map[name] });
+            }
+          });
 
-// 4. 匯出 CSV 功能
-const exportCSV = () => {
-  let csvContent = "\uFEFF品項名稱,總數量\n";
-  rawItems.forEach(name => {
-    const qty = totalSummaryMap.value[name] || 0;
-    csvContent += `"${name}",${qty}\n`;
-  });
-  const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-  const link = document.createElement('a');
-  link.href = URL.createObjectURL(blob);
-  link.setAttribute('download', `水藥調撥總數彙整_${selectedMonth.value || '全部'}.csv`);
-  document.body.appendChild(link);
-  link.click();
-  document.body.removeChild(link);
-};
+          return list;
+        });
+
+        // 3. 一鍵複製功能（維持對應 rawItems 儲存格順序）
+        const copyQuantities = () => {
+          const textToCopy = rawItems.map(name => totalSummaryMap.value[name] || 0).join('\n');
+          navigator.clipboard.writeText(textToCopy).then(() => {
+            alert('已成功複製整欄數量！\n請打開 Excel 點選第一個數量格（例如 B2），按 Ctrl+V 即可直接貼上。');
+          }).catch(() => {
+            alert('複製失敗，請確認瀏覽器權限！');
+          });
+        };
+
+        // 4. 匯出 CSV 功能
+        const exportCSV = () => {
+          let csvContent = "\uFEFF品項名稱,總數量\n";
+          rawItems.forEach(name => {
+            const qty = totalSummaryMap.value[name] || 0;
+            csvContent += `"${name}",${qty}\n`;
+          });
+          const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+          const link = document.createElement('a');
+          link.href = URL.createObjectURL(blob);
+          link.setAttribute('download', `水藥調撥總數彙整_${todayStr}.csv`);
+          document.body.appendChild(link);
+          link.click();
+          document.body.removeChild(link);
+        };
 
         return {
-  currentTab, orderDate, fromClinic, toClinic, searchKeyword, selectedMonth, selectedItem, items, activeItemsCount,
-  filteredItems, submitOrder, dbLogs, filteredGroupedLogs, editLogQty, deleteLog, sortedTotalSummary,
-  loading, submitting, fetchLogs, copyQuantities, exportCSV
-};
+          currentTab, orderDate, fromClinic, toClinic, searchKeyword, startDate, endDate, selectedClinic, selectedItem, items, activeItemsCount,
+          filteredItems, submitOrder, dbLogs, filteredGroupedLogs, resetFilters, editLogQty, deleteLog, sortedTotalSummary,
+          loading, submitting, fetchLogs, copyQuantities, exportCSV
+        };
       }
     }).mount('#app');
   </script>
