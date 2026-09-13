@@ -251,11 +251,13 @@
 
         <!-- 歷史紀錄 -->
         <div class="card">
-          <div class="card-header d-flex justify-content-between align-items-center">
+          <div class="card-header d-flex justify-content-between align-items-center flex-wrap gap-2">
             <h5 class="m-0">雲端同步歷史紀錄</h5>
-            <div>
-              <button class="btn btn-sm btn-outline-brand me-2" onclick="fetchLogs()">🔄 重新整理資料</button>
-              <button class="btn btn-sm btn-outline-success" onclick="exportToCSV()">匯出明細 CSV</button>
+            <div class="d-flex align-items-center gap-2">
+              <label for="logMonthPicker" class="form-label mb-0 small text-muted text-nowrap">歷史月份篩選：</label>
+              <input type="month" id="logMonthPicker" class="form-control form-control-sm" style="width: 140px;" onchange="renderLogs()">
+              <button class="btn btn-sm btn-outline-brand text-nowrap" onclick="fetchLogs()">🔄 重新整理</button>
+              <button class="btn btn-sm btn-outline-success text-nowrap" onclick="exportToCSV()">匯出明細 CSV</button>
             </div>
           </div>
           <div class="card-body">
@@ -353,8 +355,11 @@
 
     document.addEventListener("DOMContentLoaded", () => {
       const todayStr = getLocalDateStr();
+      const currentMonth = todayStr.substring(0, 7);
+      
       document.getElementById('batchDate').value = todayStr;
-      document.getElementById('monthPicker').value = todayStr.substring(0, 7);
+      document.getElementById('monthPicker').value = currentMonth;
+      document.getElementById('logMonthPicker').value = currentMonth;
 
       fetchLogs();
     });
@@ -537,9 +542,26 @@
     function renderLogs() {
       const logTableBody = document.getElementById('logTableBody');
       logTableBody.innerHTML = '';
+
+      const selectedMonth = document.getElementById('logMonthPicker')?.value || getLocalDateStr().substring(0, 7);
       
       logs.forEach(log => {
-        const isPending = log.vendor === "待到貨通知";
+        const isPending = !log.vendor || log.vendor === "待到貨通知";
+
+        // 判斷日期 (預計 log.date 格式 YYYY-MM-DD)
+        const logMonth = log.date ? log.date.substring(0, 7) : '';
+        const dayNum = (log.date && log.date.length >= 10) ? parseInt(log.date.substring(8, 10), 10) : 0;
+
+        // 判斷條件：
+        // 1. 紀錄符合當前篩選月份
+        // 2. 當月 29 號(含)以後輸入，且尚未填寫廠商與到貨日期的資料，將強行保留顯示
+        const isSelectedMonth = (logMonth === selectedMonth);
+        const isLateMonthUnfilled = (dayNum >= 29 && isPending);
+
+        if (!isSelectedMonth && !isLateMonthUnfilled) {
+          return; // 不符合條件者隱藏
+        }
+
         const tr = document.createElement('tr');
         tr.innerHTML = `
           <td>${log.date}</td>
@@ -558,6 +580,10 @@
         `;
         logTableBody.appendChild(tr);
       });
+
+      if (logTableBody.children.length === 0) {
+        logTableBody.innerHTML = `<tr><td colspan="5" class="text-center text-muted">該月份無符合條件的歷史紀錄</td></tr>`;
+      }
     }
 
     function exportToCSV() {
