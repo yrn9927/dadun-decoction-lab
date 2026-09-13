@@ -140,11 +140,11 @@
           </button>
         </div>
         
-        <!-- 複合過濾器區塊：包含日期範圍、院所與單品項 -->
+        <!-- 複合過濾器區塊：包含預設整月範圍、院所與單品項 -->
         <div class="flex flex-wrap items-center gap-3 bg-brand-50 p-3 rounded-lg border border-brand-200 w-full">
-          <!-- 日期起訖 -->
+          <!-- 日期起訖 (預設全月) -->
           <div class="flex items-center gap-1.5">
-            <label class="text-xs font-bold text-brand-700 shrink-0">📅 日期起訖：</label>
+            <label class="text-xs font-bold text-brand-700 shrink-0">📅 日期區間：</label>
             <input type="date" v-model="startDate" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
             <span class="text-xs text-brand-600">~</span>
             <input type="date" v-model="endDate" class="border border-brand-300 p-1.5 rounded-md bg-white text-xs focus:ring-2 focus:ring-brand-400">
@@ -256,18 +256,24 @@
       setup() {
         const currentTab = ref('input');
         
-        // 修正為在地時間
+        // 取得當前日期與當月起訖日 (YYYY-MM-01 ~ YYYY-MM-底日)
         const now = new Date();
-        const todayStr = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
+        const year = now.getFullYear();
+        const month = String(now.getMonth() + 1).padStart(2, '0');
+        const lastDayNum = new Date(year, now.getMonth() + 1, 0).getDate();
+        
+        const firstDayOfMonth = `${year}-${month}-01`;
+        const lastDayOfMonth = `${year}-${month}-${String(lastDayNum).padStart(2, '0')}`;
+        const todayStr = `${year}-${month}-${String(now.getDate()).padStart(2, '0')}`;
         
         const orderDate = ref(todayStr);
         const fromClinic = ref('南竹水藥室');
         const toClinic = ref('大墩水藥室');
         const searchKeyword = ref('');
         
-        // 篩選變數
-        const startDate = ref('');
-        const endDate = ref('');
+        // 篩選變數（預設帶入當月第一天與最後一天）
+        const startDate = ref(firstDayOfMonth);
+        const endDate = ref(lastDayOfMonth);
         const selectedClinic = ref('');
         const selectedItem = ref('');
         const loading = ref(false);
@@ -372,9 +378,10 @@
           return groups;
         });
 
+        // 重置篩選時，還原為當月預設起訖日
         const resetFilters = () => {
-          startDate.value = '';
-          endDate.value = '';
+          startDate.value = firstDayOfMonth;
+          endDate.value = lastDayOfMonth;
           selectedClinic.value = '';
           selectedItem.value = '';
         };
