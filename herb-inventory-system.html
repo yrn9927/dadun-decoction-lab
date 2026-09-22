@@ -274,7 +274,7 @@
               <div v-if="isWarningDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white border border-[#E5DEC9] rounded-xl shadow-xl p-2 space-y-1 z-30">
                 <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
                   <input type="checkbox" value="LOW_STOCK" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
-                  <span>⚠️ 低數量提醒 (≤ 2)</span>
+                  <span>⚠️ 低數量提醒 (< 2)</span>
                 </label>
                 <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
                   <input type="checkbox" value="EXP_6M" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
