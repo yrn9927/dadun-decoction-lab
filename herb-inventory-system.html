@@ -1010,7 +1010,9 @@
         });
 
         const groupedLogs = computed(() => {
-          let filtered = dbLogs.value.filter(log => {
+          const filtered = (historyFilterType.value === 'ALL' && historyFilterDate.value === 'ALL')
+            ? dbLogs.value
+            : dbLogs.value.filter(log => {
             const logType = log.type || '';
             const logDate = log.date || log.timestamp || '';
 
@@ -1062,22 +1064,41 @@
           return batches.reduce((sum, b) => sum + (Number(b.qty) || 0), 0);
         };
 
+        // 效能最佳化：
+        // 舊版會「每一種藥材都重新掃描全部 dbLogs，再各自排序」。
+        // 資料筆數增加後，這會讓載入與篩選明顯變慢。
+        // 改成同步後只建立一次「藥材 → 歷史紀錄」索引，再讓每種藥材直接取自己的紀錄。
+        const logsByHerb = computed(() => {
+          const groups = Object.create(null);
+
+          for (const log of dbLogs.value) {
+            const key = `${log.location || ''}|${log.name || ''}`;
+            if (!groups[key]) groups[key] = [];
+            groups[key].push(log);
+          }
+
+          for (const key of Object.keys(groups)) {
+            groups[key].sort((a, b) => {
+              const dateA = a.date || a.timestamp || '';
+              const dateB = b.date || b.timestamp || '';
+              if (dateA !== dateB) return dateA.localeCompare(dateB);
+              const idA = a.id || '';
+              const idB = b.id || '';
+              return idA.localeCompare(idB);
+            });
+          }
+
+          return groups;
+        });
+
         const inventoryList = computed(() => {
+          const groupedLogs = logsByHerb.value;
+
           return rawHerbData.map(herb => {
             let totalQty = 0;
             const expBatchMap = {};
 
-            const herbLogs = dbLogs.value
-              .filter(log => log.name === herb.name && log.location === herb.location)
-              .slice()
-              .sort((a, b) => {
-                const dateA = a.date || a.timestamp || '';
-                const dateB = b.date || b.timestamp || '';
-                if (dateA !== dateB) return dateA.localeCompare(dateB);
-                const idA = a.id || '';
-                const idB = b.id || '';
-                return idA.localeCompare(idB);
-              });
+            const herbLogs = groupedLogs[`${herb.location}|${herb.name}`] || [];
 
             let currentStocktakeBatch = null;
 
@@ -1329,6 +1350,7 @@
 
                 if (!Array.isArray(data)) throw new Error('雲端資料格式異常');
 
+                // 一次替換整份資料，讓 logsByHerb / inventoryList 只在同步完成後重算。
                 dbLogs.value = data;
                 return true;
               } catch (err) {
