@@ -274,7 +274,7 @@
               <div v-if="isWarningDropdownOpen" class="absolute left-0 right-0 mt-1 bg-white border border-[#E5DEC9] rounded-xl shadow-xl p-2 space-y-1 z-30">
                 <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
                   <input type="checkbox" value="LOW_STOCK" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
-                  <span>⚠️ 低數量提醒 (< 2)</span>
+                  <span>⚠️ 低數量提醒 (≤ 2)</span>
                 </label>
                 <label class="flex items-center gap-2 p-1.5 hover:bg-[#F7F2EB] rounded-lg cursor-pointer text-xs font-bold text-[#4A3B32]">
                   <input type="checkbox" value="EXP_6M" v-model="selectedWarnings" class="w-4 h-4 text-[#7A5C43] rounded">
@@ -309,6 +309,9 @@
             <span v-if="loading" class="inline-block w-3.5 h-3.5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin align-[-2px]"></span>
             <span>{{ loading ? '正在同步雲端資料…' : '🔄 重新同步雲端資料' }}</span>
           </button>
+          <div v-if="syncError" class="mt-1 text-[11px] text-rose-600 font-bold text-right">
+            {{ syncError }}
+          </div>
         </div>
 
         <div class="overflow-x-auto border border-[#E5DEC9] rounded-xl inventory-table-wrap">
@@ -998,6 +1001,7 @@
 
         const dbLogs = ref([]);
         const loading = ref(false);
+        const syncError = ref('');
         const submitting = ref(false);
         const analyzing = ref(false);
 
@@ -1334,9 +1338,12 @@
         const fetchLogs = async ({ silent = false } = {}) => {
           if (!GAS_URL || loading.value) return false;
           loading.value = true;
+          syncError.value = '';
 
-          const maxAttempts = 3;
-          const timeoutMs = 10000;
+          // Google Apps Script 讀取所有月份分頁後才回傳 JSON。
+          // 歷史資料變多後，10 秒可能不夠，因此放寬到 30 秒。
+          const maxAttempts = 2;
+          const timeoutMs = 30000;
           let lastError = null;
 
           try {
@@ -1352,26 +1359,28 @@
 
                 // 一次替換整份資料，讓 logsByHerb / inventoryList 只在同步完成後重算。
                 dbLogs.value = data;
+                syncError.value = '';
                 return true;
               } catch (err) {
                 lastError = err;
                 console.warn(`雲端資料同步第 ${attempt}/${maxAttempts} 次失敗：`, err);
 
                 if (attempt < maxAttempts) {
-                  // 0.8 秒 → 1.6 秒，給 GAS 與手機網路一點恢復時間。
-                  await wait(800 * attempt);
+                  await wait(1200);
                 }
               }
             }
 
             console.error('雲端資料同步失敗：', lastError);
 
-            // 首次載入不跳出阻塞式 Alert，避免使用者一開網頁就被擋住。
-            // 使用者手動按「重新同步」時，三次都失敗才提示。
+            const detail = lastError && lastError.message ? lastError.message : '未知錯誤';
+            syncError.value = `同步失敗：${detail}`;
+
             if (!silent) {
               alert(
                 '目前無法同步雲端資料。\n\n' +
-                '系統已自動重試 3 次，請確認網路後再按「重新同步雲端資料」。'
+                `原因：${detail}\n\n` +
+                '請稍後再按「重新同步雲端資料」。'
               );
             }
 
@@ -1537,14 +1546,14 @@
         };
 
         // 首次進入頁面採靜默同步；避免手機剛開頁面時因短暫逾時直接跳 Alert。
-        onMounted(() => { fetchLogs({ silent: true }); });
+        onMounted(() => { fetchLogs({ silent: false }); });
 
         return {
           LOW_STOCK_THRESHOLD, currentTab, searchKeyword, selectedCabinet, selectedWarnings, isWarningDropdownOpen,
           logFormHeader, cardSearchKeyword, cardFilteredInventory,
           onlyRecognized, hasRecognizedItems, recognizedCount,
           getItemBatches, addBatchRow, removeBatchRow, getItemTotalQty,
-          dbLogs, loading, submitting, analyzing, rawHerbData,
+          dbLogs, loading, syncError, submitting, analyzing, rawHerbData,
           inventoryList, filteredInventory, fetchLogs, submitBatchLogs, deleteLog, getExpStatusClass, handleImageUpload,
           historyFilterType, historyFilterDate, availableDates, groupedLogs
         };
