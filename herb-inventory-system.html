@@ -329,7 +329,7 @@
                   <div class="font-bold text-[#3D312E] leading-tight text-base">{{ item.name }}</div>
                   <div v-if="item.alias" class="text-[11px] text-stone-400 leading-tight mt-0.5">({{ item.alias }})</div>
                 </td>
-                <td class="p-2.5 text-right font-mono font-bold text-base" :class="item.currentQty <= LOW_STOCK_THRESHOLD ? 'text-rose-600' : 'text-[#3D312E]'">
+                <td class="p-2.5 text-right font-mono font-bold text-base" :class="item.currentQty < LOW_STOCK_THRESHOLD ? 'text-rose-600' : 'text-[#3D312E]'">
                   {{ item.currentQty }} <span class="text-xs text-stone-400 font-normal">件</span>
                 </td>
                 <td class="p-2.5 text-center font-mono">
@@ -341,7 +341,7 @@
                   <span v-else class="text-stone-300">-</span>
                 </td>
                 <td class="p-2.5 text-center">
-                  <span v-if="item.currentQty <= LOW_STOCK_THRESHOLD" class="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">⚠️ 低庫存</span>
+                  <span v-if="item.currentQty < LOW_STOCK_THRESHOLD" class="bg-rose-100 text-rose-800 text-xs px-2.5 py-1 rounded-full font-bold">⚠️ 低庫存</span>
                   <span v-else class="bg-emerald-100 text-emerald-800 text-xs px-2.5 py-1 rounded-full font-bold">正常</span>
                 </td>
               </tr>
@@ -361,13 +361,13 @@
                 <div class="mobile-name font-bold text-[#3D312E] leading-tight">{{ item.name }}</div>
                 <div v-if="item.alias" class="text-[11px] text-stone-400 mt-0.5 break-words">({{ item.alias }})</div>
               </div>
-              <span v-if="item.currentQty <= LOW_STOCK_THRESHOLD" class="mobile-status shrink-0 bg-rose-100 text-rose-800 px-2 py-1 rounded-full font-bold">⚠️ 低庫存</span>
+              <span v-if="item.currentQty < LOW_STOCK_THRESHOLD" class="mobile-status shrink-0 bg-rose-100 text-rose-800 px-2 py-1 rounded-full font-bold">⚠️ 低庫存</span>
               <span v-else class="mobile-status shrink-0 bg-emerald-100 text-emerald-800 px-2 py-1 rounded-full font-bold">正常</span>
             </div>
 
             <div class="mobile-card-grid">
               <div class="mobile-label">目前庫存</div>
-              <div class="mobile-value mobile-qty" :class="item.currentQty <= LOW_STOCK_THRESHOLD ? 'text-rose-600' : 'text-[#3D312E]'">{{ item.currentQty }} 件</div>
+              <div class="mobile-value mobile-qty" :class="item.currentQty < LOW_STOCK_THRESHOLD ? 'text-rose-600' : 'text-[#3D312E]'">{{ item.currentQty }} 件</div>
 
               <div class="mobile-label">有效期限與批次</div>
               <div class="mobile-value">
@@ -1228,7 +1228,7 @@
 
         const checkItemWarning = (item, warningType) => {
           if (warningType === 'LOW_STOCK') {
-            return item.currentQty <= LOW_STOCK_THRESHOLD;
+            return item.currentQty < LOW_STOCK_THRESHOLD;
           }
 
           if (!item.expList || item.expList.length === 0) return false;
