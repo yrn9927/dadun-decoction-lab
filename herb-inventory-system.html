@@ -225,7 +225,7 @@
         <button @click="currentTab = 'log'" :class="['px-6 py-3.5 font-bold transition-all text-sm md:text-base', currentTab === 'log' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
           📝 庫存異動登記（進/出/盤點）
         </button>
-        <button @click="currentTab = 'history'; fetchLogs()" :class="['px-6 py-3.5 font-bold transition-all flex items-center gap-2 text-sm md:text-base', currentTab === 'history' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
+        <button @click="currentTab = 'history'; fetchHistoryMonth(historyMonth)" :class="['px-6 py-3.5 font-bold transition-all flex items-center gap-2 text-sm md:text-base', currentTab === 'history' ? 'border-b-2 border-[#7A5C43] text-[#7A5C43] bg-[#F7F2EB]' : 'text-stone-500 hover:text-stone-800 hover:bg-stone-50']">
           📜 歷史異動明細
           <span v-if="loading" class="inline-block w-3.5 h-3.5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin" title="同步中"></span>
         </button>
@@ -302,7 +302,7 @@
         <div class="flex justify-between items-center mb-4 text-sm text-stone-600 font-medium overview-summary">
           <span>顯示品項：<strong class="text-[#7A5C43]">{{ filteredInventory.length }}</strong> / {{ rawHerbData.length }} 項</span>
           <button
-            @click="fetchLogs()"
+            @click="syncAll()"
             :disabled="loading"
             class="text-xs bg-[#F4EFEA] hover:bg-[#E8DFD5] disabled:opacity-60 disabled:cursor-wait text-[#5C4033] border border-[#D8C9B9] px-3 py-1.5 rounded-lg transition font-bold"
           >
@@ -518,10 +518,18 @@
             <h2 class="text-2xl font-bold text-[#4A3B32] flex items-center gap-2">
               📖 異動明細紀錄
             </h2>
-            <p class="text-xs text-[#7A5C43] mt-0.5">依照日期精簡檢視各品項進出狀況（共 {{ dbLogs.length }} 筆紀錄）</p>
+            <p class="text-xs text-[#7A5C43] mt-0.5">目前顯示 {{ historyMonth }} 異動（共 {{ dbLogs.length }} 筆；其他月份需要時再載入）</p>
           </div>
 
           <div class="flex flex-wrap items-center gap-3 w-full md:w-auto history-controls">
+            <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-[#D8C9B9] shadow-sm">
+              <span class="text-xs font-bold text-[#5C4033]">月份：</span>
+              <select v-model="historyMonth" @change="fetchHistoryMonth(historyMonth)" :disabled="historyLoading" class="text-sm bg-transparent font-bold text-[#4A3B32] outline-none cursor-pointer disabled:opacity-60">
+                <option v-for="m in availableMonths" :key="m" :value="m">{{ m }}</option>
+              </select>
+              <span v-if="historyLoading" class="inline-block w-3.5 h-3.5 border-2 border-blue-200 border-t-blue-600 rounded-full animate-spin"></span>
+            </div>
+
             <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-[#D8C9B9] shadow-sm">
               <span class="text-xs font-bold text-[#5C4033]">選單：</span>
               <select v-model="historyFilterType" class="text-sm bg-transparent font-bold text-[#4A3B32] outline-none cursor-pointer">
@@ -533,7 +541,7 @@
             </div>
 
             <div class="flex items-center gap-1.5 bg-white px-3 py-1.5 rounded-xl border border-[#D8C9B9] shadow-sm">
-              <span class="text-xs font-bold text-[#5C4033]">時間：</span>
+              <span class="text-xs font-bold text-[#5C4033]">日期：</span>
               <select v-model="historyFilterDate" class="text-sm bg-transparent font-bold text-[#4A3B32] outline-none cursor-pointer">
                 <option value="ALL">全部日期</option>
                 <option v-for="d in availableDates" :key="d" :value="d">{{ d }}</option>
@@ -999,14 +1007,18 @@
 
         const itemBatchInputs = reactive({});
 
-        const dbLogs = ref([]);
+        const dbLogs = ref([]); // 僅保存目前正在檢視的月份明細，避免把所有歷史明細塞進瀏覽器。
+        const inventorySummary = ref({}); // GAS 已完成跨月份庫存計算後的精簡結果。
         const loading = ref(false);
+        const historyLoading = ref(false);
         const syncError = ref('');
         const submitting = ref(false);
         const analyzing = ref(false);
 
         const historyFilterType = ref('ALL');
         const historyFilterDate = ref('ALL');
+        const historyMonth = ref(`${new Date().getFullYear()}-${String(new Date().getMonth() + 1).padStart(2, '0')}`);
+        const availableMonths = ref([]);
 
         const availableDates = computed(() => {
           const dates = dbLogs.value.map(log => log.date || log.timestamp).filter(Boolean);
@@ -1017,21 +1029,21 @@
           const filtered = (historyFilterType.value === 'ALL' && historyFilterDate.value === 'ALL')
             ? dbLogs.value
             : dbLogs.value.filter(log => {
-            const logType = log.type || '';
-            const logDate = log.date || log.timestamp || '';
+              const logType = log.type || '';
+              const logDate = log.date || log.timestamp || '';
 
-            if (historyFilterType.value !== 'ALL') {
-              if (historyFilterType.value === '出庫' && !logType.includes('出')) return false;
-              if (historyFilterType.value === '盤點' && !logType.includes('盤')) return false;
-              if (historyFilterType.value === '進貨' && logType !== '進貨') return false;
-            }
+              if (historyFilterType.value !== 'ALL') {
+                if (historyFilterType.value === '出庫' && !logType.includes('出')) return false;
+                if (historyFilterType.value === '盤點' && !logType.includes('盤')) return false;
+                if (historyFilterType.value === '進貨' && logType !== '進貨') return false;
+              }
 
-            if (historyFilterDate.value !== 'ALL' && logDate !== historyFilterDate.value) {
-              return false;
-            }
+              if (historyFilterDate.value !== 'ALL' && logDate !== historyFilterDate.value) {
+                return false;
+              }
 
-            return true;
-          });
+              return true;
+            });
 
           const groups = {};
           filtered.forEach(log => {
@@ -1068,133 +1080,17 @@
           return batches.reduce((sum, b) => sum + (Number(b.qty) || 0), 0);
         };
 
-        // 效能最佳化：
-        // 舊版會「每一種藥材都重新掃描全部 dbLogs，再各自排序」。
-        // 資料筆數增加後，這會讓載入與篩選明顯變慢。
-        // 改成同步後只建立一次「藥材 → 歷史紀錄」索引，再讓每種藥材直接取自己的紀錄。
-        const logsByHerb = computed(() => {
-          const groups = Object.create(null);
-
-          for (const log of dbLogs.value) {
-            const key = `${log.location || ''}|${log.name || ''}`;
-            if (!groups[key]) groups[key] = [];
-            groups[key].push(log);
-          }
-
-          for (const key of Object.keys(groups)) {
-            groups[key].sort((a, b) => {
-              const dateA = a.date || a.timestamp || '';
-              const dateB = b.date || b.timestamp || '';
-              if (dateA !== dateB) return dateA.localeCompare(dateB);
-              const idA = a.id || '';
-              const idB = b.id || '';
-              return idA.localeCompare(idB);
-            });
-          }
-
-          return groups;
-        });
-
+        // 效能最佳化：庫存不再由瀏覽器重新掃描全部歷史明細。
+        // GAS 會跨月份計算完整庫存，只回傳每個藥材的目前庫存與有效期限批次。
+        // 這樣「庫存總覽」仍然使用完整歷史資料，但瀏覽器不必接收全部歷史紀錄。
         const inventoryList = computed(() => {
-          const groupedLogs = logsByHerb.value;
-
           return rawHerbData.map(herb => {
-            let totalQty = 0;
-            const expBatchMap = {};
-
-            const herbLogs = groupedLogs[`${herb.location}|${herb.name}`] || [];
-
-            let currentStocktakeBatch = null;
-
-            herbLogs.forEach(log => {
-              const logQty = Number(log.qty) || 0;
-              const rawExp = log.expDate ? log.expDate.trim() : '未填效期';
-              const logDate = log.date || log.timestamp || '';
-
-              let submissionTime = '';
-              if (log.id && log.id.startsWith('INV_')) {
-                submissionTime = log.id.split('_')[1] || '';
-              }
-
-              if (log.type === '進貨') {
-                totalQty += logQty;
-                expBatchMap[rawExp] = Number(((expBatchMap[rawExp] || 0) + logQty).toFixed(4));
-                currentStocktakeBatch = null;
-              } else if (log.type === '出庫' || log.type === '出貨') {
-                totalQty -= logQty;
-                let deductQty = logQty;
-
-                if (rawExp && expBatchMap[rawExp] !== undefined) {
-                  const avail = expBatchMap[rawExp];
-                  if (avail >= deductQty) {
-                    expBatchMap[rawExp] -= deductQty;
-                    deductQty = 0;
-                  } else {
-                    deductQty -= avail;
-                    expBatchMap[rawExp] = 0;
-                  }
-                }
-
-                if (deductQty > 0) {
-                  const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
-                    if (a === '未填效期') return 1;
-                    if (b === '未填效期') return -1;
-                    return new Date(a) - new Date(b);
-                  });
-
-                  for (const expKey of sortedExpKeys) {
-                    if (deductQty <= 0) break;
-                    const currentExpQty = expBatchMap[expKey];
-                    if (currentExpQty > 0) {
-                      if (currentExpQty >= deductQty) {
-                        expBatchMap[expKey] -= deductQty;
-                        deductQty = 0;
-                      } else {
-                        deductQty -= currentExpQty;
-                        expBatchMap[expKey] = 0;
-                      }
-                    }
-                  }
-                }
-                currentStocktakeBatch = null;
-              } else if (log.type === '盤點' || log.type === '盤點修正') {
-                const sessionKey = submissionTime ? `${logDate}_${submissionTime}` : `${logDate}_${log.operator || ''}_stocktake`;
-
-                if (currentStocktakeBatch === sessionKey) {
-                  totalQty += logQty;
-                  expBatchMap[rawExp] = Number(((expBatchMap[rawExp] || 0) + logQty).toFixed(4));
-                } else {
-                  totalQty = logQty;
-                  Object.keys(expBatchMap).forEach(k => expBatchMap[k] = 0);
-                  expBatchMap[rawExp] = logQty;
-                  currentStocktakeBatch = sessionKey;
-                }
-              }
-            });
-
-            totalQty = Number(totalQty.toFixed(4));
-
-            const expList = [];
-            const sortedExpKeys = Object.keys(expBatchMap).sort((a, b) => {
-              if (a === '未填效期') return 1;
-              if (b === '未填效期') return -1;
-              return new Date(a) - new Date(b);
-            });
-
-            sortedExpKeys.forEach(expKey => {
-              const batchQty = Number(expBatchMap[expKey].toFixed(4));
-              if (batchQty > 0) {
-                expList.push({
-                  rawDate: expKey,
-                  formattedText: `${expKey}*${batchQty}`
-                });
-              }
-            });
-
-            return { 
-              ...herb, 
-              currentQty: totalQty < 0 ? 0 : totalQty, 
-              expList: expList
+            const key = `${herb.location}|${herb.name}`;
+            const summary = inventorySummary.value[key] || { currentQty: 0, expList: [] };
+            return {
+              ...herb,
+              currentQty: Number(summary.currentQty) || 0,
+              expList: Array.isArray(summary.expList) ? summary.expList : []
             };
           });
         });
@@ -1307,9 +1203,10 @@
           });
         });
 
-        // 雲端同步：每次「完整取得回應＋解析 JSON」最多等待 10 秒，逾時後自動重試。
-        // 這可避免手機／摺疊機網路或 GAS 暫時沒有回應時，fetch / response.json() 一直卡住。
-        const fetchJsonWithTimeout = async (url, options = {}, timeoutMs = 10000) => {
+        // 雲端同步：庫存與異動明細分開取得。
+        // 1) inventory：GAS 讀取完整歷史並在伺服器端計算庫存，只回傳精簡結果。
+        // 2) history：只載入目前選擇的月份；切換上個月時才另外向 GAS 讀取。
+        const fetchJsonWithTimeout = async (url, options = {}, timeoutMs = 30000) => {
           const controller = new AbortController();
           const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
@@ -1334,46 +1231,124 @@
         };
 
         const wait = (ms) => new Promise(resolve => setTimeout(resolve, ms));
+        const makeGasUrl = (params = {}) => {
+          const url = new URL(GAS_URL);
+          Object.entries(params).forEach(([key, value]) => url.searchParams.set(key, value));
+          url.searchParams.set('_sync', Date.now().toString());
+          return url.toString();
+        };
 
-        const fetchLogs = async ({ silent = false } = {}) => {
-          if (!GAS_URL || loading.value) return false;
-          loading.value = true;
-          syncError.value = '';
-
-          // Google Apps Script 讀取所有月份分頁後才回傳 JSON。
-          // 歷史資料變多後，10 秒可能不夠，因此放寬到 30 秒。
+        const fetchInventory = async () => {
           const maxAttempts = 2;
           const timeoutMs = 30000;
           let lastError = null;
 
-          try {
-            for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-              try {
-                const syncUrl = GAS_URL + (GAS_URL.includes('?') ? '&' : '?') + '_sync=' + Date.now();
-                const { data } = await fetchJsonWithTimeout(syncUrl, {
-                  method: 'GET',
-                  cache: 'no-store'
-                }, timeoutMs);
+          for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+            try {
+              const { data } = await fetchJsonWithTimeout(makeGasUrl({ mode: 'inventory' }), {
+                method: 'GET',
+                cache: 'no-store'
+              }, timeoutMs);
 
-                if (!Array.isArray(data)) throw new Error('雲端資料格式異常');
-
-                // 一次替換整份資料，讓 logsByHerb / inventoryList 只在同步完成後重算。
-                dbLogs.value = data;
-                syncError.value = '';
-                return true;
-              } catch (err) {
-                lastError = err;
-                console.warn(`雲端資料同步第 ${attempt}/${maxAttempts} 次失敗：`, err);
-
-                if (attempt < maxAttempts) {
-                  await wait(1200);
-                }
+              if (!data || data.status !== 'success' || !Array.isArray(data.inventory)) {
+                throw new Error(data && data.message ? data.message : '雲端庫存資料格式異常');
               }
+
+              const map = Object.create(null);
+              data.inventory.forEach(item => {
+                map[`${item.location || ''}|${item.name || ''}`] = item;
+              });
+              inventorySummary.value = map;
+              return true;
+            } catch (err) {
+              lastError = err;
+              console.warn(`庫存同步第 ${attempt}/${maxAttempts} 次失敗：`, err);
+              if (attempt < maxAttempts) await wait(1200);
+            }
+          }
+
+          throw lastError || new Error('庫存同步失敗');
+        };
+
+        const fetchHistoryMonths = async () => {
+          try {
+            const { data } = await fetchJsonWithTimeout(makeGasUrl({ mode: 'historyMonths' }), {
+              method: 'GET',
+              cache: 'no-store'
+            }, 15000);
+
+            if (!data || data.status !== 'success' || !Array.isArray(data.months)) {
+              throw new Error(data && data.message ? data.message : '月份資料格式異常');
             }
 
-            console.error('雲端資料同步失敗：', lastError);
+            const currentMonth = historyMonth.value;
+            availableMonths.value = [...new Set([currentMonth, ...data.months])]
+              .filter(Boolean)
+              .sort((a, b) => b.localeCompare(a));
 
-            const detail = lastError && lastError.message ? lastError.message : '未知錯誤';
+            if (!availableMonths.value.includes(historyMonth.value)) {
+              historyMonth.value = availableMonths.value[0] || currentMonth;
+            }
+            return true;
+          } catch (err) {
+            console.warn('取得歷史月份清單失敗：', err);
+            // 至少保留目前月份，避免下拉選單完全沒有選項。
+            availableMonths.value = [historyMonth.value];
+            return false;
+          }
+        };
+
+        const fetchHistoryMonth = async (month, { silent = false } = {}) => {
+          if (!GAS_URL || historyLoading.value || !month) return false;
+          historyLoading.value = true;
+          historyFilterDate.value = 'ALL';
+
+          try {
+            const { data } = await fetchJsonWithTimeout(makeGasUrl({ mode: 'history', month }), {
+              method: 'GET',
+              cache: 'no-store'
+            }, 20000);
+
+            if (!Array.isArray(data)) {
+              throw new Error(data && data.message ? data.message : '歷史資料格式異常');
+            }
+
+            dbLogs.value = data;
+            return true;
+          } catch (err) {
+            console.error(`讀取 ${month} 歷史明細失敗：`, err);
+            if (!silent) {
+              syncError.value = `讀取 ${month} 異動明細失敗：${err.message || '未知錯誤'}`;
+              alert(syncError.value);
+            }
+            return false;
+          } finally {
+            historyLoading.value = false;
+          }
+        };
+
+        const syncAll = async ({ silent = false } = {}) => {
+          if (!GAS_URL || loading.value) return false;
+          loading.value = true;
+          syncError.value = '';
+
+          try {
+            const results = await Promise.allSettled([
+              fetchInventory(),
+              fetchHistoryMonths()
+            ]);
+
+            const inventoryResult = results[0];
+            if (inventoryResult.status === 'rejected') {
+              throw inventoryResult.reason || new Error('庫存同步失敗');
+            }
+
+            await fetchHistoryMonth(historyMonth.value, { silent: true });
+            syncError.value = '';
+            return true;
+          } catch (err) {
+            const detail = err && err.message ? err.message : '未知錯誤';
+            console.error('雲端資料同步失敗：', err);
             syncError.value = `同步失敗：${detail}`;
 
             if (!silent) {
@@ -1383,7 +1358,6 @@
                 '請稍後再按「重新同步雲端資料」。'
               );
             }
-
             return false;
           } finally {
             loading.value = false;
@@ -1529,7 +1503,7 @@
             onlyRecognized.value = false;
             
             alert(`成功發送 ${newEntries.length} 筆異動紀錄！`);
-            await fetchLogs();
+            await syncAll();
             currentTab.value = 'overview';
           } catch (err) { 
             alert('傳送失敗！'); 
@@ -1541,12 +1515,21 @@
         const deleteLog = async (id) => {
           if (confirm('確定要刪除這筆異動紀錄嗎？')) {
             dbLogs.value = dbLogs.value.filter(log => log.id !== id);
-            await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: id }) });
+            try {
+              const res = await fetch(GAS_URL, { method: 'POST', body: JSON.stringify({ action: 'delete', id: id }) });
+              const data = await res.json();
+              if (!data || data.status !== 'success') throw new Error(data && data.message ? data.message : '刪除失敗');
+              // 刪除會影響庫存，重新取得精簡的完整庫存結果；歷史畫面則維持目前月份。
+              await fetchInventory();
+            } catch (err) {
+              alert('刪除失敗：' + (err.message || '未知錯誤'));
+              await fetchHistoryMonth(historyMonth.value, { silent: true });
+            }
           }
         };
 
-        // 首次進入頁面採靜默同步；避免手機剛開頁面時因短暫逾時直接跳 Alert。
-        onMounted(() => { fetchLogs({ silent: false }); });
+        // 首次進入：完整歷史只在 GAS 端計算庫存；瀏覽器只接收庫存摘要 + 當月明細。
+        onMounted(() => { syncAll({ silent: false }); });
 
         return {
           LOW_STOCK_THRESHOLD, currentTab, searchKeyword, selectedCabinet, selectedWarnings, isWarningDropdownOpen,
@@ -1554,8 +1537,8 @@
           onlyRecognized, hasRecognizedItems, recognizedCount,
           getItemBatches, addBatchRow, removeBatchRow, getItemTotalQty,
           dbLogs, loading, syncError, submitting, analyzing, rawHerbData,
-          inventoryList, filteredInventory, fetchLogs, submitBatchLogs, deleteLog, getExpStatusClass, handleImageUpload,
-          historyFilterType, historyFilterDate, availableDates, groupedLogs
+          inventoryList, filteredInventory, syncAll, fetchInventory, fetchHistoryMonth, submitBatchLogs, deleteLog, getExpStatusClass, handleImageUpload,
+          historyFilterType, historyFilterDate, availableDates, availableMonths, historyMonth, groupedLogs, historyLoading
         };
       }
     }).mount('#app');
