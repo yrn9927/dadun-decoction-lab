@@ -2,7 +2,7 @@
 <html lang="zh-TW">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <!-- 引入 Tailwind CSS 與 Vue.js -->
   <script src="https://cdn.tailwindcss.com"></script>
@@ -33,6 +33,382 @@
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Noto+Serif+TC:wght@600;700&display=swap');
     .font-serif-tc { font-family: 'Noto Serif TC', serif; }
+
+    /* =========================================================
+       全裝置響應式設定
+       - 不綁定特定手機品牌/型號
+       - 依可用螢幕寬度自動調整
+       - 支援一般手機、摺疊外/內螢幕、平板、桌機
+       ========================================================= */
+
+    html {
+      width: 100%;
+      min-height: 100%;
+      -webkit-text-size-adjust: 100%;
+      text-size-adjust: 100%;
+    }
+
+    body {
+      width: 100%;
+      min-width: 0;
+      overflow-x: hidden;
+      padding-left: max(0.75rem, env(safe-area-inset-left));
+      padding-right: max(0.75rem, env(safe-area-inset-right));
+      padding-bottom: max(1rem, env(safe-area-inset-bottom));
+    }
+
+    #app {
+      width: 100%;
+      min-width: 0;
+    }
+
+    /* 防止長中文、長品名把版面撐爆 */
+    input,
+    button,
+    select,
+    textarea {
+      max-width: 100%;
+      min-width: 0;
+    }
+
+    input,
+    button {
+      font: inherit;
+    }
+
+    /* 院所下拉選單：手機點擊區域更友善 */
+    .clinic-dropdown-panel {
+      max-height: min(50vh, 360px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .clinic-dropdown-option {
+      min-height: 44px;
+      touch-action: manipulation;
+    }
+
+    /* 品項名稱允許換行，不讓長品名把數量框擠出去 */
+    .item-name {
+      min-width: 0;
+      overflow-wrap: anywhere;
+      word-break: break-word;
+    }
+
+    /* 後台表格在窄螢幕可以水平捲動 */
+    .responsive-table-wrap {
+      width: 100%;
+      overflow-x: auto;
+      -webkit-overflow-scrolling: touch;
+    }
+
+    .responsive-table-wrap table {
+      min-width: 420px;
+    }
+
+    /* =========================================================
+       ≤ 767px：手機 / 摺疊外螢幕
+       ========================================================= */
+    @media (max-width: 767px) {
+      body {
+        padding-top: max(0.5rem, env(safe-area-inset-top));
+      }
+
+      #app {
+        max-width: none !important;
+      }
+
+      /* Header */
+      #app > header {
+        padding: 0.75rem;
+        margin-bottom: 0.75rem;
+        gap: 0.65rem;
+        border-radius: 0.8rem;
+      }
+
+      #app > header > div:first-child {
+        width: 100%;
+        min-width: 0;
+        gap: 0.65rem;
+      }
+
+      #app > header img {
+        height: 2rem;
+        flex-shrink: 0;
+      }
+
+      #app > header h1 {
+        font-size: 0.95rem;
+        line-height: 1.35;
+        min-width: 0;
+        overflow-wrap: anywhere;
+      }
+
+      #app > header > div:last-child {
+        width: 100%;
+        justify-content: flex-end;
+      }
+
+      /* 頁籤：手機時平均分配 */
+      #app > div.flex.border-b {
+        width: 100%;
+        margin-bottom: 0.75rem;
+      }
+
+      #app > div.flex.border-b > button {
+        flex: 1 1 0;
+        min-width: 0;
+        padding: 0.7rem 0.45rem;
+        font-size: 0.78rem;
+        line-height: 1.3;
+        white-space: normal;
+      }
+
+      /* 前台 / 後台卡片 */
+      #app > div.bg-white {
+        padding: 0.85rem;
+        border-radius: 0.8rem;
+      }
+
+      /* 前台標題列 */
+      #app h2 {
+        line-height: 1.35;
+        overflow-wrap: anywhere;
+      }
+
+      /* 日期 + 院所：一律單欄，避免窄螢幕擠壓 */
+      #app .grid.grid-cols-1.md\:grid-cols-3 {
+        grid-template-columns: minmax(0, 1fr) !important;
+        gap: 0.75rem;
+        padding: 0.75rem;
+      }
+
+      /* 輸入框觸控高度 */
+      #app input[type="date"],
+      #app input[type="text"],
+      #app input[type="number"] {
+        min-height: 44px;
+        font-size: 16px; /* 避免 iOS 自動放大 */
+      }
+
+      /* 品項搜尋 */
+      #app input[type="text"] {
+        width: 100%;
+      }
+
+      /* 品項清單：手機一欄 */
+      #app .max-h-\[500px\] {
+        max-height: 55vh;
+        min-height: 180px;
+        padding: 0.5rem;
+      }
+
+      #app .max-h-\[500px\] > div {
+        min-width: 0;
+      }
+
+      #app .max-h-\[500px\] .p-3 {
+        padding: 0.7rem;
+      }
+
+      #app .max-h-\[500px\] input[type="number"] {
+        width: 4.5rem;
+        flex: 0 0 4.5rem;
+      }
+
+      /* 送出按鈕 */
+      #app button.mt-6 {
+        min-height: 48px;
+        margin-top: 0.85rem;
+      }
+
+      /* 後台篩選器：全部垂直排列 */
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.65rem;
+      }
+
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 > div {
+        width: 100%;
+        min-width: 0;
+        flex-wrap: wrap;
+      }
+
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 input {
+        flex: 1 1 0;
+        width: auto !important;
+        min-width: 0;
+      }
+
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 button {
+        width: 100%;
+        min-height: 42px;
+        margin-left: 0;
+      }
+
+      /* 後台標題區 */
+      #app .flex.flex-wrap.justify-between.items-center.border-b {
+        align-items: stretch;
+      }
+
+      /* 後台「重新整理」按鈕 */
+      #app .flex.flex-wrap.justify-between.items-center.border-b > div:first-child {
+        width: 100%;
+        flex-wrap: wrap;
+      }
+
+      #app .flex.flex-wrap.justify-between.items-center.border-b > div:first-child button {
+        min-height: 40px;
+      }
+
+      /* 後台明細卡片 */
+      #app .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+        grid-template-columns: minmax(0, 1fr) !important;
+      }
+
+      #app .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 > div {
+        min-width: 0;
+      }
+
+      /* 日期 / 院所 badge 避免超出畫面 */
+      #app h3 span {
+        max-width: 100%;
+        overflow-wrap: anywhere;
+      }
+
+      /* 統計區按鈕 */
+      #app .flex.gap-2 {
+        flex-wrap: wrap;
+        width: 100%;
+      }
+
+      #app .flex.gap-2 > button {
+        flex: 1 1 100%;
+        min-height: 42px;
+      }
+
+      /* 表格 */
+      .responsive-table-wrap {
+        border-radius: 0.75rem;
+      }
+    }
+
+    /* =========================================================
+       480px 以下：窄手機 / 部分摺疊外螢幕
+       ========================================================= */
+    @media (max-width: 480px) {
+      #app > header h1 {
+        font-size: 0.88rem;
+      }
+
+      #app > header > div:first-child > div:nth-child(2) {
+        display: none;
+      }
+
+      #app > div.bg-white {
+        padding: 0.7rem;
+      }
+
+      #app h2 {
+        font-size: 1rem;
+      }
+
+      #app .text-base {
+        font-size: 0.9rem;
+      }
+
+      #app .max-h-\[500px\] {
+        max-height: 52vh;
+      }
+    }
+
+    /* =========================================================
+       768px～1023px：平板直立 / 摺疊內螢幕的中等寬度
+       ========================================================= */
+    @media (min-width: 768px) and (max-width: 1023px) {
+      body {
+        padding-left: max(1rem, env(safe-area-inset-left));
+        padding-right: max(1rem, env(safe-area-inset-right));
+      }
+
+      #app {
+        max-width: 920px;
+      }
+
+      /* 前台資訊：平板可用兩欄，日期獨立一欄 */
+      #app .grid.grid-cols-1.md\:grid-cols-3 {
+        grid-template-columns: minmax(0, 0.8fr) minmax(0, 1fr) !important;
+      }
+
+      #app .grid.grid-cols-1.md\:grid-cols-3 > div:first-child {
+        grid-column: 1 / -1;
+      }
+
+      /* 品項：平板兩欄 */
+      #app .max-h-\[500px\] {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      /* 後台明細：兩欄 */
+      #app .grid.grid-cols-1.md\:grid-cols-2.lg\:grid-cols-3 {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+      }
+
+      /* 後台篩選器允許自然換行 */
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 {
+        display: flex;
+        align-items: center;
+      }
+
+      #app .flex.flex-wrap.items-center.gap-3.bg-brand-50 > div {
+        flex: 1 1 45%;
+        min-width: 280px;
+      }
+    }
+
+    /* =========================================================
+       ≥ 1024px：平板橫向 / 桌機
+       ========================================================= */
+    @media (min-width: 1024px) {
+      #app {
+        width: 100%;
+      }
+
+      /* 保留原本 Tailwind 的三欄品項 / 明細配置 */
+      #app .max-h-\[500px\] {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+    }
+
+    /* =========================================================
+       ≥ 1280px：大型平板橫向 / 桌機寬螢幕
+       避免內容過度拉寬造成閱讀距離太大
+       ========================================================= */
+    @media (min-width: 1280px) {
+      #app {
+        max-width: 1152px;
+      }
+    }
+
+    /* 摺疊裝置橫向 / 超寬內螢幕：避免內容無限拉寬 */
+    @media (min-width: 1400px) {
+      #app {
+        max-width: 1200px;
+      }
+    }
+
+    /* 使用者系統若偏好減少動畫 */
+    @media (prefers-reduced-motion: reduce) {
+      *,
+      *::before,
+      *::after {
+        scroll-behavior: auto !important;
+        transition-duration: 0.01ms !important;
+        animation-duration: 0.01ms !important;
+      }
+    }
+
   </style>
 </head>
 <body class="bg-brand-50 min-h-screen p-4 md:p-6 text-brand-800">
@@ -75,7 +451,7 @@
       </button>
     </div>
 
-    <!-- 1. 前端填寫頁面 -->
+    <!-- 1. 前端填寫頁面：Responsive 會依螢幕寬度自動排列 -->
     <div v-if="currentTab === 'input'" class="bg-white p-6 rounded-xl shadow-sm border border-brand-200">
       <div class="flex justify-between items-center mb-5 border-b border-brand-100 pb-3">
         <h2 class="text-lg font-bold text-brand-800">院所調撥單輸入（共 {{ items.length }} 項）</h2>
@@ -88,24 +464,86 @@
           <label class="block text-xs font-bold text-brand-700 mb-1.5">📅 調撥日期</label>
           <input type="date" v-model="orderDate" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
         </div>
-        <div>
-          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調出院所（提供方）</label>
-          <input type="text" v-model="fromClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+
+        <!-- 調出水藥室（提供方） -->
+        <div class="relative">
+          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調出水藥室（提供方）</label>
+          <div class="relative">
+            <input
+              type="text"
+              v-model="fromClinic"
+              placeholder="請輸入或選擇水藥室"
+              autocomplete="off"
+              @focus="activeClinicDropdown = 'from'"
+              @click.stop
+              class="border border-brand-300 p-2 pr-10 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+            >
+            <button
+              type="button"
+              @mousedown.prevent="activeClinicDropdown = activeClinicDropdown === 'from' ? '' : 'from'"
+              class="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-brand-700 text-lg"
+              aria-label="開啟調出水藥室選單"
+            >▼</button>
+          </div>
+
+          <div
+            v-if="activeClinicDropdown === 'from'"
+            class="clinic-dropdown-panel absolute z-50 left-0 right-0 mt-1 bg-white border border-brand-300 rounded-lg shadow-lg overflow-hidden"
+          >
+            <button
+              v-for="clinic in filteredFromClinics"
+              :key="clinic"
+              type="button"
+              @mousedown.prevent="selectClinic('from', clinic)"
+              class="clinic-dropdown-option block w-full text-left px-4 py-3 text-sm text-brand-800 bg-white hover:bg-brand-50 active:bg-brand-100 border-b border-brand-100 last:border-b-0"
+            >
+              {{ clinic }}
+            </button>
+            <div v-if="filteredFromClinics.length === 0" class="px-4 py-3 text-sm text-gray-400">
+              沒有符合的水藥室，可直接輸入
+            </div>
+          </div>
         </div>
-        <div>
-          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調入力院所（需求方）</label>
-          <input type="text" v-model="toClinic" placeholder="請輸入或選擇院所" list="clinic-list" class="border border-brand-300 p-2 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none">
+
+        <!-- 調入院所／水藥室（需求方） -->
+        <div class="relative">
+          <label class="block text-xs font-bold text-brand-700 mb-1.5">🏥 調入院所/水藥室（需求方）</label>
+          <div class="relative">
+            <input
+              type="text"
+              v-model="toClinic"
+              placeholder="請輸入或選擇院所"
+              autocomplete="off"
+              @focus="activeClinicDropdown = 'to'"
+              @click.stop
+              class="border border-brand-300 p-2 pr-10 rounded-lg w-full bg-white text-sm focus:ring-2 focus:ring-brand-400 focus:outline-none"
+            >
+            <button
+              type="button"
+              @mousedown.prevent="activeClinicDropdown = activeClinicDropdown === 'to' ? '' : 'to'"
+              class="absolute right-0 top-0 h-full w-10 flex items-center justify-center text-brand-700 text-lg"
+              aria-label="開啟調入院所選單"
+            >▼</button>
+          </div>
+
+          <div
+            v-if="activeClinicDropdown === 'to'"
+            class="clinic-dropdown-panel absolute z-50 left-0 right-0 mt-1 bg-white border border-brand-300 rounded-lg shadow-lg overflow-hidden"
+          >
+            <button
+              v-for="clinic in filteredToClinics"
+              :key="clinic"
+              type="button"
+              @mousedown.prevent="selectClinic('to', clinic)"
+              class="clinic-dropdown-option block w-full text-left px-4 py-3 text-sm text-brand-800 bg-white hover:bg-brand-50 active:bg-brand-100 border-b border-brand-100 last:border-b-0"
+            >
+              {{ clinic }}
+            </button>
+            <div v-if="filteredToClinics.length === 0" class="px-4 py-3 text-sm text-gray-400">
+              沒有符合的院所，可直接輸入
+            </div>
+          </div>
         </div>
-        
-        <datalist id="clinic-list">
-          <option value="大墩水藥室"></option>
-          <option value="大墩"></option>
-          <option value="大里"></option>
-          <option value="福科"></option>
-          <option value="竹北"></option>
-          <option value="湖口"></option>
-          <option value="南竹水藥室"></option>
-        </datalist>
       </div>
 
       <!-- 關鍵字搜尋 -->
@@ -118,7 +556,7 @@
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3 max-h-[500px] overflow-y-auto p-3 border border-brand-200 rounded-lg bg-brand-50/30">
         <div v-for="item in filteredItems" :key="item.name" 
              :class="['flex justify-between items-center p-3 rounded-lg border transition-all', item.qty > 0 ? 'bg-brand-100/80 border-brand-400 shadow-2xs' : 'bg-white border-brand-200 hover:border-brand-300']">
-          <span class="font-medium text-sm text-brand-800 pr-2">{{ item.name }}</span>
+          <span class="item-name font-medium text-sm text-brand-800 pr-2">{{ item.name }}</span>
           <input type="number" min="0" placeholder="0" v-model.number="item.qty" class="border border-brand-300 p-1 w-20 text-center rounded-md focus:ring-2 focus:ring-brand-400 font-bold text-brand-700 bg-white">
         </div>
       </div>
@@ -130,7 +568,7 @@
       </button>
     </div>
 
-    <!-- 2. 後台統計與歷史查詢頁面 -->
+    <!-- 2. 後台統計與歷史查詢頁面：窄螢幕自動改為可捲動/堆疊 -->
     <div v-if="currentTab === 'admin'" class="bg-white p-6 rounded-xl shadow-sm border border-brand-200">
       <div class="flex flex-wrap justify-between items-center border-b border-brand-100 pb-4 mb-6 gap-4">
         <div class="flex items-center gap-3">
@@ -223,7 +661,7 @@
               </button>
             </div>
           </div>
-          <div class="border border-brand-200 rounded-xl overflow-hidden shadow-2xs">
+          <div class="responsive-table-wrap border border-brand-200 rounded-xl shadow-2xs">
             <table class="w-full border-collapse text-left">
               <thead>
                 <tr class="bg-brand-100/70 text-brand-800 border-b border-brand-200 text-sm">
@@ -248,7 +686,7 @@
   </div>
 
   <script>
-    const { createApp, ref, computed, onMounted } = Vue;
+    const { createApp, ref, computed, onMounted, onBeforeUnmount } = Vue;
 
     const GAS_URL = 'https://script.google.com/macros/s/AKfycbzHEkdHXj8VoFZ38iEL6P9WLGoXm_ivARLoQWBLDfPyY2oV-1Qv1Nf7uGr5cMeEByi1fw/exec';
 
@@ -267,8 +705,49 @@
         const todayStr = `${year}-${month}-${String(now.getDate()).padStart(2, '0')}`;
         
         const orderDate = ref(todayStr);
+
+        // 調出水藥室（提供方）：預設仍為南竹水藥室
+        const fromClinicOptions = [
+          '南竹水藥室',
+          '桃園水藥室',
+          '桃鶯水藥室'
+        ];
+
+        // 調入院所／水藥室（需求方）：固定六家
+        const toClinicOptions = [
+          '大墩水藥室',
+          '大墩',
+          '大里',
+          '福科',
+          '竹北',
+          '湖口'
+        ];
+
         const fromClinic = ref('南竹水藥室');
         const toClinic = ref('大墩水藥室');
+        const activeClinicDropdown = ref('');
+
+        const filteredFromClinics = computed(() => {
+          const keyword = fromClinic.value.trim().toLowerCase();
+          if (!keyword) return fromClinicOptions;
+          return fromClinicOptions.filter(clinic => clinic.toLowerCase().includes(keyword));
+        });
+
+        const filteredToClinics = computed(() => {
+          const keyword = toClinic.value.trim().toLowerCase();
+          if (!keyword) return toClinicOptions;
+          return toClinicOptions.filter(clinic => clinic.toLowerCase().includes(keyword));
+        });
+
+        const selectClinic = (field, clinic) => {
+          if (field === 'from') {
+            fromClinic.value = clinic;
+          } else {
+            toClinic.value = clinic;
+          }
+          activeClinicDropdown.value = '';
+        };
+
         const searchKeyword = ref('');
         
         // 篩選變數（預設帶入當月第一天與最後一天）
@@ -300,8 +779,19 @@
           }
         };
 
+        const closeClinicDropdown = (event) => {
+          if (!event.target.closest('.relative')) {
+            activeClinicDropdown.value = '';
+          }
+        };
+
         onMounted(() => {
           fetchLogs();
+          document.addEventListener('click', closeClinicDropdown);
+        });
+
+        onBeforeUnmount(() => {
+          document.removeEventListener('click', closeClinicDropdown);
         });
 
         const activeItemsCount = computed(() => items.value.filter(i => i.qty > 0).length);
@@ -484,6 +974,7 @@
 
         return {
           currentTab, orderDate, fromClinic, toClinic, searchKeyword, startDate, endDate, selectedClinic, selectedItem, items, activeItemsCount,
+          activeClinicDropdown, filteredFromClinics, filteredToClinics, selectClinic,
           filteredItems, submitOrder, dbLogs, filteredGroupedLogs, resetFilters, editLogQty, deleteLog, sortedTotalSummary,
           loading, submitting, fetchLogs, copyQuantities, exportCSV
         };
