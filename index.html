@@ -18,6 +18,84 @@
       background-color: var(--bg-main);
       color: var(--color-primary);
     }
+  
+    /* ===== 借用品項：待下訂提醒 ===== */
+    .borrow-card {
+      position: relative;
+      overflow: visible;
+    }
+
+    .borrow-order-alert {
+      display: none;
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      z-index: 5;
+      align-items: center;
+      gap: 5px;
+      padding: 5px 9px;
+      border-radius: 999px;
+      background: #dc3545;
+      color: #fff;
+      font-size: 0.72rem;
+      font-weight: 700;
+      box-shadow: 0 3px 10px rgba(220, 53, 69, 0.28);
+      white-space: nowrap;
+      animation: borrowAlertPulse 1.6s ease-in-out infinite;
+    }
+
+    .borrow-order-alert .borrow-alert-dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: #fff;
+      flex: 0 0 auto;
+    }
+
+    .borrow-order-message {
+      display: none;
+      margin-top: 10px;
+      padding: 7px 10px;
+      border-radius: 8px;
+      background: #fff1f2;
+      color: #b42318;
+      border: 1px solid #fecdd3;
+      font-size: 0.78rem;
+      font-weight: 700;
+      line-height: 1.4;
+    }
+
+    .borrow-card.has-pending-order {
+      border-color: #e58a93 !important;
+      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.10), 0 8px 20px rgba(220, 53, 69, 0.12) !important;
+    }
+
+    .borrow-card.has-pending-order .borrow-order-alert,
+    .borrow-card.has-pending-order .borrow-order-message {
+      display: flex;
+    }
+
+    .borrow-card.has-pending-order .borrow-order-message {
+      display: block;
+    }
+
+    @keyframes borrowAlertPulse {
+      0%, 100% {
+        transform: scale(1);
+        opacity: 1;
+      }
+      50% {
+        transform: scale(1.04);
+        opacity: 0.82;
+      }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+      .borrow-order-alert {
+        animation: none;
+      }
+    }
+
   </style>
 </head>
 <body class="min-h-screen flex flex-col justify-between">
@@ -82,11 +160,22 @@
           <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
         </a>
 
-        <!-- 卡片 4 -->
-        <a href="borrow.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+        <!-- 卡片 4：借用品項（含待下訂提醒） -->
+        <a href="borrow.html" id="borrowCard"
+           class="borrow-card bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <span id="borrowOrderAlert" class="borrow-order-alert" aria-live="polite">
+            <span class="borrow-alert-dot"></span>
+            <span id="borrowOrderAlertText">待下訂</span>
+          </span>
+
           <div class="text-4xl mb-4">🤲</div>
           <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">借用品項</h2>
           <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室借用之糖果、牛皮袋，並能查詢歷史紀錄。</p>
+
+          <div id="borrowOrderMessage" class="borrow-order-message">
+            ⚠️ 有 <span id="borrowOrderPendingCount">0</span> 項採購下訂提醒
+          </div>
+
           <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
         </a>
 
@@ -98,6 +187,108 @@
   <footer class="text-center py-4 text-xs text-[#8C6D53]/70">
     © 風澤醫療體系 大墩水藥室
   </footer>
+
+
+  <script>
+    /* ===== 主選單：同步借用品項的待下訂提醒 =====
+       與 borrow.html 使用相同的滿箱門檻與 localStorage 勾選狀態。
+       不需要修改 GAS。 */
+    (function initBorrowOrderReminder() {
+      const BORROW_GAS_URL = "https://script.google.com/macros/s/AKfycbwz3E-EO3dGsraL9NFGMU7sU13KaZCjrSNieWUWYEEGxYN9PiXSyaePES_qkJP0ENhzWQ/exec";
+
+      const ITEM_BOX_LIMITS = {
+        "梅餅": 30,
+        "酸梅": 20,
+        "梅粒": 40,
+        "大牛皮紙袋": 25,
+        "小牛皮紙袋": 50
+      };
+
+      const DEFAULT_BOX_QTY = 30;
+
+      function updateBorrowOrderReminder(logs) {
+        const card = document.getElementById("borrowCard");
+        const alertText = document.getElementById("borrowOrderAlertText");
+        const pendingCountEl = document.getElementById("borrowOrderPendingCount");
+
+        if (!card || !alertText || !pendingCountEl) return;
+
+        const itemGroups = {};
+
+        (Array.isArray(logs) ? logs : []).forEach(item => {
+          if (!item || !item.name) return;
+
+          const name = String(item.name).trim();
+          if (!name) return;
+
+          if (!itemGroups[name]) itemGroups[name] = [];
+          itemGroups[name].push(item);
+        });
+
+        let pendingCount = 0;
+
+        Object.keys(itemGroups).forEach(name => {
+          const records = itemGroups[name].slice().sort((a, b) => {
+            return new Date(a.date) - new Date(b.date);
+          });
+
+          let currentCum = 0;
+          let reachedBoxes = 0;
+          const boxLimit = ITEM_BOX_LIMITS[name] || DEFAULT_BOX_QTY;
+
+          records.forEach(rec => {
+            const qty = parseFloat(rec.qty) || 0;
+            currentCum += qty;
+
+            while (currentCum >= (reachedBoxes + 1) * boxLimit) {
+              reachedBoxes++;
+
+              const notifId = `order_${name}_box_${reachedBoxes}`;
+              const isChecked = localStorage.getItem(notifId) === "true";
+
+              if (!isChecked) {
+                pendingCount++;
+              }
+            }
+          });
+        });
+
+        if (pendingCount > 0) {
+          card.classList.add("has-pending-order");
+          alertText.textContent = `待下訂 ${pendingCount}`;
+          pendingCountEl.textContent = pendingCount;
+        } else {
+          card.classList.remove("has-pending-order");
+          alertText.textContent = "待下訂";
+          pendingCountEl.textContent = "0";
+        }
+      }
+
+      function loadBorrowOrderReminder() {
+        fetch(BORROW_GAS_URL)
+          .then(res => res.json())
+          .then(data => {
+            updateBorrowOrderReminder(data);
+          })
+          .catch(err => {
+            // 主選單本身不因借用提醒讀取失敗而跳錯誤。
+            console.warn("借用品項下訂提醒讀取失敗：", err);
+          });
+      }
+
+      document.addEventListener("DOMContentLoaded", loadBorrowOrderReminder);
+
+      // 從 borrow.html 返回主選單時，重新整理提醒狀態。
+      window.addEventListener("pageshow", loadBorrowOrderReminder);
+
+      // 使用者可能在其他分頁的 borrow.html 完成下訂。
+      window.addEventListener("storage", function(event) {
+        if (event.key && event.key.startsWith("order_")) {
+          loadBorrowOrderReminder();
+        }
+      });
+    })();
+  </script>
 
 </body>
 </html>
