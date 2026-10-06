@@ -358,6 +358,48 @@
       .table-responsive > table { min-width: 100%; }
     }
 
+
+    /* ===== 修正：採購下訂通知頁籤的紅色數字被捲動容器裁切 ===== */
+    .nav-tabs { padding-top: 6px; }
+    .nav-tabs .nav-link { display: inline-flex; align-items: center; gap: 6px; }
+    #pendingBadge {
+      position: static !important;
+      transform: none !important;
+      top: auto !important; left: auto !important;
+      display: inline-block;
+      min-width: 1.5em;
+      line-height: 1;
+      padding: .4em .55em;
+      font-size: .72rem;
+      white-space: nowrap;
+    }
+    #pendingBadge[style*="display: none"] { display: none !important; }
+
+    /* ===== 採購下訂通知卡片：依裝置寬度自動調整 ===== */
+    .order-row { flex-wrap: wrap; gap: 12px; }
+    .order-main { flex: 1 1 320px; min-width: 0; }
+    .order-body { min-width: 0; flex: 1 1 auto; }
+    .order-text { overflow-wrap: anywhere; line-height: 1.5; }
+    .order-body .small { overflow-wrap: anywhere; line-height: 1.7; }
+    .order-status { flex: 0 0 auto; white-space: nowrap !important; }
+    #orderNotificationList, #order-pane .card { min-width: 0; }
+
+    @media (max-width: 599.98px) {
+      .order-text { font-size: 1.02rem !important; }
+      .order-main { flex: 1 1 100%; gap: 10px !important; }
+      .order-status { flex: 1 1 100%; text-align: center; font-size: .95rem !important; }
+      .order-body .small { font-size: .8rem !important; }
+    }
+    @media (max-width: 360px) {
+      .order-text { font-size: .95rem !important; }
+      .order-main { flex-direction: column; align-items: stretch !important; }
+      .order-main .checkbox-box { flex-direction: row; gap: 8px; width: 100%; }
+    }
+    /* 平板／摺疊機內螢幕／桌機：勾選框、內容、狀態橫向一列 */
+    @media (min-width: 600px) {
+      .order-row { flex-wrap: nowrap; }
+      .order-main { flex: 1 1 auto; }
+    }
   </style>
 </head>
 <body>
@@ -853,15 +895,15 @@
         card.className = `card order-item-card p-3 shadow-sm ${isChecked ? 'completed' : ''}`;
         card.id = `card_${notif.id}`;
         card.innerHTML = `
-          <div class="d-flex align-items-center justify-content-between">
-            <div class="d-flex align-items-center gap-3">
+          <div class="d-flex align-items-center justify-content-between order-row">
+            <div class="d-flex align-items-center gap-3 order-main">
               <label class="checkbox-box" for="${notif.id}">
                 <input class="form-check-input form-check-input-lg m-0" type="checkbox" id="${notif.id}" ${isChecked ? 'checked' : ''} onchange="toggleOrderCheck('${notif.id}')">
                 <span class="fw-bold mt-1 text-center" id="txt_${notif.id}" style="font-size: 0.72rem; color: var(--brand-brown);">
                   ${isChecked ? '已下訂' : '點我打勾'}
                 </span>
               </label>
-              <div>
+              <div class="order-body">
                 <div class="fs-5 fw-bold order-text">
                   【${notif.name}】於 ${formattedMonthDay} 達標第 ${notif.boxNum} 箱，<span class="text-danger fw-bold">請通知下訂 1 箱</span>
                 </div>
@@ -870,7 +912,7 @@
                 </div>
               </div>
             </div>
-            <span class="badge ${isChecked ? 'bg-success' : 'bg-danger'} px-3 py-2 fs-6" id="badge_${notif.id}">
+            <span class="badge ${isChecked ? 'bg-success' : 'bg-danger'} px-3 py-2 fs-6 order-status" id="badge_${notif.id}">
               ${isChecked ? '已完成下訂' : '待處理下訂'}
             </span>
           </div>
@@ -909,12 +951,12 @@
 
       if (isChecked) {
         card.classList.add('completed');
-        badge.className = 'badge bg-success px-3 py-2 fs-6';
+        badge.className = 'badge bg-success px-3 py-2 fs-6 order-status';
         badge.innerText = '已完成下訂';
         if (txt) txt.innerText = '已下訂';
       } else {
         card.classList.remove('completed');
-        badge.className = 'badge bg-danger px-3 py-2 fs-6';
+        badge.className = 'badge bg-danger px-3 py-2 fs-6 order-status';
         badge.innerText = '待處理下訂';
         if (txt) txt.innerText = '點我打勾';
       }
