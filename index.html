@@ -3,9 +3,22 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>大墩水藥室管理系統</title>
+  <title>大墩水藥室管理系統 - 風澤醫療體系</title>
   <script src="https://cdn.tailwindcss.com"></script>
   <style>
+    :root {
+      --bg-main: #F7F4EF;
+      --color-primary: #4A3B32;
+      --color-accent: #8C6D53;
+      --border-color: #E2DAD0;
+    }
+
+    body {
+      background-color: var(--bg-main);
+      color: var(--color-primary);
+    }
+
+    /* 借用品項待下訂提醒 */
     .borrow-card {
       position: relative;
       overflow: hidden;
@@ -17,15 +30,13 @@
       right: 12px;
       display: none;
       align-items: center;
-      gap: 5px;
-      background: #dc3545;
-      color: #fff;
+      gap: 6px;
       padding: 5px 9px;
       border-radius: 999px;
-      font-size: 11px;
+      background: #dc3545;
+      color: #fff;
+      font-size: 12px;
       font-weight: 700;
-      line-height: 1;
-      box-shadow: 0 2px 8px rgba(220, 53, 69, 0.28);
       z-index: 2;
     }
 
@@ -34,7 +45,7 @@
       height: 7px;
       border-radius: 50%;
       background: #fff;
-      animation: borrowAlertPulse 1.1s infinite;
+      animation: borrowAlertPulse 1s infinite;
     }
 
     .borrow-order-message {
@@ -46,88 +57,127 @@
       color: #b42318;
       font-size: 12px;
       font-weight: 700;
-      line-height: 1.4;
     }
 
     .borrow-card.has-pending-order {
       border-color: #dc3545 !important;
-      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.10), 0 5px 18px rgba(220, 53, 69, 0.12);
+      box-shadow: 0 0 0 2px rgba(220, 53, 69, 0.12), 0 8px 20px rgba(220, 53, 69, 0.10);
     }
 
-    .borrow-card.has-pending-order .borrow-order-alert,
-    .borrow-card.has-pending-order .borrow-order-message {
+    .borrow-card.has-pending-order .borrow-order-alert {
       display: flex;
+    }
+
+    .borrow-card.has-pending-order .borrow-order-message {
+      display: block;
     }
 
     @keyframes borrowAlertPulse {
       0%, 100% { opacity: 1; transform: scale(1); }
-      50% { opacity: 0.35; transform: scale(0.75); }
+      50% { opacity: 0.45; transform: scale(0.8); }
+    }
+
+    /* 響應式四方塊：
+       桌機 4 欄、平板 2 欄、手機 1 欄 */
+    .function-grid {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1.5rem;
+    }
+
+    @media (min-width: 640px) {
+      .function-grid {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+    }
+
+    @media (min-width: 1024px) {
+      .function-grid {
+        grid-template-columns: repeat(4, minmax(0, 1fr));
+      }
     }
   </style>
 </head>
-<body class="bg-[#F8F5F0] min-h-screen text-[#4A3B32]">
+<body class="min-h-screen flex flex-col justify-between">
 
-  <header class="bg-white border-b border-[#E2DAD0]">
-    <div class="max-w-6xl mx-auto px-4 py-4 flex items-center">
-      <img src="logo.png" alt="大墩水藥室" class="h-12 w-auto">
-      <div class="ml-4">
-        <h1 class="text-xl font-bold">大墩水藥室管理系統</h1>
-        <p class="text-xs text-gray-500 mt-1">院所、藥材、庫存與借用管理</p>
+  <header class="bg-white/90 backdrop-blur-md border-b border-[#E2DAD0] shadow-sm sticky top-0 z-50">
+    <div class="max-w-5xl mx-auto px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-4">
+        <img src="logo.png" alt="風澤醫療體系" class="h-10 md:h-12 object-contain">
+        <div class="h-6 w-[2px] bg-[#8C6D53]/30 hidden sm:block"></div>
+        <span class="text-base sm:text-lg font-bold text-[#4A3B32] hidden sm:inline-block">大墩水藥室管理系統</span>
       </div>
+      <span class="text-xs text-[#8C6D53] font-medium bg-[#F7F4EF] px-3 py-1.5 rounded-full border border-[#E2DAD0]">
+        風澤醫療體系
+      </span>
     </div>
   </header>
 
-  <main class="max-w-6xl mx-auto px-4 py-8">
-    <div class="mb-8">
-      <div class="rounded-2xl overflow-hidden shadow-sm border border-[#E2DAD0]">
-        <img src="fengze_bg.jpg" alt="豐澤中醫院" class="w-full h-auto block">
+  <main class="flex-1 flex items-center justify-center p-6 my-4">
+    <div class="max-w-4xl w-full">
+
+      <!-- 中間圖片：維持舊版尺寸與裁切方式 -->
+      <div class="mb-8 overflow-hidden rounded-2xl shadow-md border border-[#E2DAD0] bg-white">
+        <img src="fengze_bg.jpg" alt="風澤醫療體系主視覺" class="w-full h-48 sm:h-64 md:h-72 object-cover object-center">
       </div>
-    </div>
 
-    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
+      <div class="text-center mb-10">
+        <h1 class="text-3xl md:text-4xl font-bold text-[#4A3B32] mb-3 flex items-center justify-center gap-2">
+          <span>🌿</span> 大墩水藥室管理系統
+        </h1>
+        <p class="text-[#8C6D53] text-sm">請選擇您要使用的功能模組</p>
+      </div>
 
-      <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">📦</div>
-        <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">庫存管理</h2>
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed">查看藥材庫存、進貨與出貨紀錄，掌握目前庫存狀況。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-      </a>
+      <!-- 四方塊：新版響應式 -->
+      <div class="function-grid">
 
-      <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">🏥</div>
-        <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">院所調撥系統</h2>
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed">管理院所與水藥室之間的品項調撥需求與紀錄。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-      </a>
+        <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">📦</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">庫存管理</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">查詢現有庫存數量與有效期限。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
 
-      <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-        <div class="text-4xl mb-4">🌿</div>
-        <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">藥材調撥系統</h2>
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed">管理藥材調撥、需求與相關紀錄。</p>
-        <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-      </a>
+        <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">🔄</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">院所調撥系統</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">跨院區調撥，貨品流向與歷史紀錄查詢。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
 
-      <a id="borrowCard" href="borrow.html" class="borrow-card bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-        <span class="borrow-order-alert">
-          <span class="borrow-alert-dot"></span>
-          有待下訂
-        </span>
+        <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <div class="text-4xl mb-4">📊</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">藥材調撥系統</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室調撥之品項、數量與廠商，並能查詢歷史紀錄。</p>
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
 
-        <div class="text-4xl mb-4">🤲</div>
-        <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">借用品項</h2>
-        <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室借用之糖果、牛皮袋，並能查詢歷史紀錄。</p>
+        <a id="borrowCard" href="borrow.html" class="borrow-card bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+          <span class="borrow-order-alert"><span class="borrow-alert-dot"></span>有待下訂</span>
 
-        <div class="borrow-order-message">⚠️ 借用品項有待下訂，請點入查看</div>
+          <div class="text-4xl mb-4">🤲</div>
+          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">借用品項</h2>
+          <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室借用之糖果、牛皮袋，並能查詢歷史紀錄。</p>
 
-        <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-      </a>
+          <div class="borrow-order-message">⚠️ 借用品項有待下訂，請點入查看</div>
 
+          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+        </a>
+
+      </div>
     </div>
   </main>
 
+  <footer class="text-center py-4 text-xs text-[#8C6D53]/70">
+    © 風澤醫療體系 大墩水藥室
+  </footer>
+
   <script>
-    // 借用品項下訂提醒：主畫面直接向借用系統 GAS 抓資料。
-    // 不依賴先進入 borrow.html，也不使用快取。
+    /* =========================================================
+       借用品項待下訂提醒
+       主畫面直接抓 GAS，不需要先進 borrow.html
+       ========================================================= */
+
     const BORROW_GAS_URL = "https://script.google.com/macros/s/AKfycbwz3E-EO3dGsraL9NFGMU7sU13KaZCjrSNieWUWYEEGxYN9PiXSyaePES_qkJP0ENhzWQ/exec";
 
     const ITEM_BOX_LIMITS = {
@@ -162,9 +212,9 @@
       let pendingCount = 0;
 
       Object.keys(itemGroups).forEach(name => {
-        const records = itemGroups[name].sort((a, b) => {
-          return new Date(a.date) - new Date(b.date);
-        });
+        const records = itemGroups[name].sort(
+          (a, b) => new Date(a.date) - new Date(b.date)
+        );
 
         const boxLimit = ITEM_BOX_LIMITS[name] || DEFAULT_BOX_QTY;
 
@@ -195,7 +245,6 @@
     function refreshBorrowOrderReminder() {
       const now = Date.now();
 
-      // 避免 DOMContentLoaded 與 pageshow 在同一瞬間重複抓取。
       if (now - borrowReminderLastFetch < 500) return;
       borrowReminderLastFetch = now;
 
@@ -205,7 +254,7 @@
       })
       .then(response => {
         if (!response.ok) {
-          throw new Error(`借用資料讀取失敗：HTTP ${response.status}`);
+          throw new Error("借用品項資料讀取失敗");
         }
         return response.json();
       })
@@ -214,22 +263,18 @@
         applyBorrowOrderReminder(pendingCount);
       })
       .catch(error => {
-        console.error("借用品項下訂提醒讀取失敗：", error);
-        // 抓不到資料時不改變畫面，不影響主畫面其他功能。
+        console.error("借用品項提醒載入失敗：", error);
       });
     }
 
-    // 一進主畫面就直接開始抓資料；不等待使用者點進借用品項。
     document.addEventListener("DOMContentLoaded", () => {
       refreshBorrowOrderReminder();
     });
 
-    // 從 borrow.html 返回主畫面時，再重新抓一次最新狀態。
     window.addEventListener("pageshow", () => {
       refreshBorrowOrderReminder();
     });
 
-    // 若同一個瀏覽器分頁中有其他頁面修改了下訂勾選狀態，也同步更新。
     window.addEventListener("storage", event => {
       if (event.key && event.key.startsWith("order_")) {
         refreshBorrowOrderReminder();
