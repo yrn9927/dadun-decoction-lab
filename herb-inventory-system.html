@@ -1423,13 +1423,21 @@
                   
                   const cleanAiName = item.name.replace(/\(.*\)/g, '').replace(/（.*）/g, '').trim();
 
-                  const matchedHerb = rawHerbData.find(h => {
-                    const cleanHerbName = h.name.replace(/\(.*\)/g, '').replace(/（.*）/g, '').trim();
-                    return cleanHerbName === cleanAiName ||
-                           cleanHerbName.includes(cleanAiName) || 
-                           cleanAiName.includes(cleanHerbName) ||
-                           (h.alias && h.alias.includes(cleanAiName));
-                  });
+                  // 1. 先找「完全相符」或「別名相符」
+let matchedHerb = rawHerbData.find(h => {
+  const cleanHerbName = h.name.replace(/\(.*\)/g, '').replace(/（.*）/g, '').trim();
+  const aliases = h.alias ? h.alias.split(/[.、,]/).map(a => a.trim()) : [];
+  return cleanHerbName === cleanAiName || aliases.includes(cleanAiName);
+});
+
+// 2. 如果沒有完全相符，才用包含判定，但「優先比對字串較長（更精確）的藥材」
+if (!matchedHerb) {
+  const sortedHerbs = [...rawHerbData].sort((a, b) => b.name.length - a.name.length);
+  matchedHerb = sortedHerbs.find(h => {
+    const cleanHerbName = h.name.replace(/\(.*\)/g, '').replace(/（.*）/g, '').trim();
+    return cleanHerbName.includes(cleanAiName) || cleanAiName.includes(cleanHerbName);
+  });
+}
 
                   if (matchedHerb) {
                     const key = matchedHerb.location + '|' + matchedHerb.name;
