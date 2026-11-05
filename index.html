@@ -11,25 +11,26 @@
       --color-primary: #4A3B32;
       --color-accent: #8C6D53;
       --border-color: #E2DAD0;
-      /* 主視覺圖高度：想看更多圖就調大、想更省空間就調小 */
-      --hero-h: 5.5rem;
+      /* 主視覺圖最大寬度：56rem 即原本大小；調小會等比例縮小，不會裁切 */
+      --hero-w: 56rem;
     }
-
-    @media (min-width: 640px)  { :root { --hero-h: 7rem; } }
-    @media (min-width: 1024px) { :root { --hero-h: 9rem; } }
 
     body {
       background-color: var(--bg-main);
       color: var(--color-primary);
     }
 
-    /* 主視覺圖：縮成橫幅，置中裁切 */
+    /* 主視覺圖：維持原圖比例，不裁切 */
+    .hero {
+      max-width: var(--hero-w);
+      margin-left: auto;
+      margin-right: auto;
+    }
+
     .hero-img {
       display: block;
       width: 100%;
-      height: var(--hero-h);
-      object-fit: cover;
-      object-position: center;
+      height: auto;
     }
 
     /* 借用品項待下訂提醒 */
@@ -240,8 +241,8 @@
   <main class="flex-1 flex items-center justify-center p-4 sm:p-6 my-2">
     <div class="max-w-5xl w-full">
 
-      <!-- 主視覺橫幅（高度由上方 --hero-h 控制） -->
-      <div class="mb-5 overflow-hidden rounded-2xl shadow-md border border-[#E2DAD0] bg-white">
+      <!-- 主視覺圖：原圖比例、原本大小（寬度由上方 --hero-w 控制） -->
+      <div class="hero mb-5 overflow-hidden rounded-2xl shadow-md border border-[#E2DAD0] bg-white">
         <img src="fengze_bg.jpg" alt="風澤醫療體系主視覺" class="hero-img">
       </div>
 
@@ -343,7 +344,7 @@
             <a href="https://script.google.com/macros/s/AKfycbwERSAln35-XgVqUeB09-dvvQbGwLw3M0zyg4z3Kas/dev" class="item">
               <span class="item-icon">📝</span>
               <div class="item-body">
-                <h3 class="item-name">本草藥鏈(藥材盤點)</h3>
+                <h3 class="item-name">本草藥鏈</h3>
                 <p class="item-desc">藥材盤點作業。</p>
               </div>
               <span class="item-go">&rarr;</span>
