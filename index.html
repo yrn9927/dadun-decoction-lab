@@ -77,23 +77,52 @@
       50% { opacity: 0.45; transform: scale(0.8); }
     }
 
-    /* 響應式四方塊：
-       桌機 4 欄、平板 2 欄、手機 1 欄 */
-    .function-grid {
+    /* 依需求分類：
+       桌機/平板 左側分類名稱 + 右側功能方塊（2 欄）
+       手機 分類名稱在上、方塊 1 欄 */
+    .category-list {
+      display: flex;
+      flex-direction: column;
+      gap: 2rem;
+    }
+
+    .category {
+      display: grid;
+      grid-template-columns: 1fr;
+      gap: 1rem;
+    }
+
+    .category + .category {
+      border-top: 1px dashed var(--border-color);
+      padding-top: 2rem;
+    }
+
+    .category-label {
+      align-self: start;
+      font-size: 1.125rem;
+      font-weight: 700;
+      color: var(--color-accent);
+      border-left: 4px solid var(--color-accent);
+      padding-left: 0.75rem;
+      line-height: 1.4;
+    }
+
+    .category-cards {
       display: grid;
       grid-template-columns: 1fr;
       gap: 1.5rem;
     }
 
     @media (min-width: 640px) {
-      .function-grid {
+      .category-cards {
         grid-template-columns: repeat(2, minmax(0, 1fr));
       }
     }
 
-    @media (min-width: 1024px) {
-      .function-grid {
-        grid-template-columns: repeat(4, minmax(0, 1fr));
+    @media (min-width: 768px) {
+      .category {
+        grid-template-columns: 7rem minmax(0, 1fr);
+        gap: 1.5rem;
       }
     }
   </style>
@@ -128,41 +157,112 @@
         <p class="text-[#8C6D53] text-sm">請選擇您要使用的功能模組</p>
       </div>
 
-      <!-- 四方塊：新版響應式 -->
-      <div class="function-grid">
+      <div class="category-list">
 
-        <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-          <div class="text-4xl mb-4">📦</div>
-          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">庫存管理</h2>
-          <p class="text-xs text-gray-500 mt-2 leading-relaxed">查詢現有庫存數量與有效期限。</p>
-          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-        </a>
+        <!-- ========== 庫存 ========== -->
+        <section class="category">
+          <h2 class="category-label">庫存</h2>
+          <div class="category-cards">
 
-        <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-          <div class="text-4xl mb-4">🔄</div>
-          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">院所調撥系統</h2>
-          <p class="text-xs text-gray-500 mt-2 leading-relaxed">跨院區調撥，貨品流向與歷史紀錄查詢。</p>
-          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-        </a>
+            <a href="herb-inventory-system.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">📦</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">庫存管理</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">查詢現有庫存數量與有效期限。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
 
-        <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-          <div class="text-4xl mb-4">📊</div>
-          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">藥材調撥系統</h2>
-          <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室調撥之品項、數量與廠商，並能查詢歷史紀錄。</p>
-          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-        </a>
+          </div>
+        </section>
 
-        <a id="borrowCard" href="borrow.html" class="borrow-card bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
-          <span class="borrow-order-alert"><span class="borrow-alert-dot"></span>有待下訂</span>
+        <!-- ========== 調撥 ========== -->
+        <section class="category">
+          <h2 class="category-label">調撥</h2>
+          <div class="category-cards">
 
-          <div class="text-4xl mb-4">🤲</div>
-          <h2 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">借用品項</h2>
-          <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室借用之糖果、牛皮袋，並能查詢歷史紀錄。</p>
+            <a href="transfer.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">🔄</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">院所調撥系統</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">跨院區調撥，貨品流向與歷史紀錄查詢。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
 
-          <div class="borrow-order-message">⚠️ 借用品項有待下訂，請點入查看</div>
+            <a href="Chinese-herbs.html" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">📊</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">藥材調撥系統</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室調撥之品項、數量與廠商，並能查詢歷史紀錄。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
 
-          <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
-        </a>
+            <!-- TODO：請把 href="#" 換成「桃園區」系統的實際網址，說明文字也請自行修改 -->
+            <a href="https://script.google.com/macros/s/AKfycbwxRWtfI5oUgp_WzkAxznxEyU0HNF4P7HM_DkKcGu9-kbFO5ZZl5rvWQ8onWHLTu7KQ/exec" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">📍</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">桃園區調撥</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">桃園區調撥紀錄與歷史查詢。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
+
+            <a id="borrowCard" href="borrow.html" class="borrow-card bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <span class="borrow-order-alert"><span class="borrow-alert-dot"></span>有待下訂</span>
+
+              <div class="text-4xl mb-4">🤲</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">借用品項</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">紀錄與南竹水藥室借用之糖果、牛皮袋，並能查詢歷史紀錄。</p>
+
+              <div class="borrow-order-message">⚠️ 借用品項有待下訂，請點入查看</div>
+
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
+
+          </div>
+        </section>
+
+        <!-- ========== 分裝 ========== -->
+        <section class="category">
+          <h2 class="category-label">分裝</h2>
+          <div class="category-cards">
+
+            <!-- TODO：請把 href="#" 換成「茶包分裝」的實際網址 -->
+            <a href="https://script.google.com/macros/s/AKfycbw7vYhT8j1qzWbc1yZuLk0Y96AeMSIpE_9flHs0xkOE-bes4CKaRVc40VDRJ1-dUyKm/exec" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">🍵</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">茶包分裝</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">茶包分裝作業與紀錄。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
+
+          </div>
+        </section>
+
+        <!-- ========== 盤點 ========== -->
+        <section class="category">
+          <h2 class="category-label">盤點</h2>
+          <div class="category-cards">
+
+            <!-- TODO：請把 href="#" 換成「本草藥鏈」的實際網址 -->
+            <a href="https://script.google.com/macros/s/AKfycbwERSAln35-XgVqUeB09-dvvQbGwLw3M0zyg4z3Kas/dev" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">📝</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">本草藥鏈</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">藥材盤點作業。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
+
+          </div>
+        </section>
+
+        <!-- ========== 配送 ========== -->
+        <section class="category">
+          <h2 class="category-label">配送</h2>
+          <div class="category-cards">
+
+            <!-- TODO：請把 href="#" 換成「配送」的實際網址，名稱與說明也請自行修改 -->
+            <a href="https://script.google.com/macros/s/AKfycbxIq29vCouc8WXl_Uj1WFoCKcyooGq2VAzEOYOU6pRd1w4lD65EEJUjukqtNJVWmCFl/exec" class="bg-white p-6 rounded-2xl shadow-sm hover:shadow-md border border-[#E2DAD0] hover:border-[#8C6D53] transition-all transform hover:-translate-y-1 block group">
+              <div class="text-4xl mb-4">🚚</div>
+              <h3 class="text-xl font-bold text-[#4A3B32] group-hover:text-[#8C6D53] transition">配送系統</h3>
+              <p class="text-xs text-gray-500 mt-2 leading-relaxed">配送作業與紀錄查詢。</p>
+              <span class="inline-block mt-4 text-xs font-bold text-[#8C6D53] group-hover:translate-x-1 transition-transform">進入系統 &rarr;</span>
+            </a>
+
+          </div>
+        </section>
 
       </div>
     </div>
