@@ -449,10 +449,11 @@
           
           <div v-if="hasRecognizedItems" class="mb-4 p-3 bg-[#EFE8DC] border border-[#D8C9B9] rounded-lg flex flex-col sm:flex-row items-center justify-between gap-2">
             <div class="text-xs font-bold text-[#5C4033] flex items-center gap-1.5">
-              🔍 AI 已成功轉換並帶入資料！目前開啟核對模式（共 {{ recognizedCount }} 項）
+              <template v-if="isAiMode">🔍 AI 已成功轉換並帶入資料！目前開啟核對模式（共 {{ recognizedCount }} 項）</template>
+              <template v-else>📝 目前已輸入 {{ recognizedCount }} 項藥材</template>
             </div>
             <button @click="onlyRecognized = !onlyRecognized" class="text-xs bg-[#7A5C43] hover:bg-[#634833] text-white font-bold px-3 py-1.5 rounded-lg transition">
-              {{ onlyRecognized ? '🌐 切換為：顯示全部藥材' : '🎯 切換為：僅顯示辨識項目' }}
+              {{ onlyRecognized ? '🌐 切換為：顯示全部藥材' : (isAiMode ? '🎯 切換為：僅顯示辨識項目' : '🎯 切換為：僅顯示已輸入項目') }}
             </button>
           </div>
 
@@ -1273,9 +1274,20 @@
           });
         });
 
-        const hasRecognizedItems = computed(() => recognizedKeys.value.length > 0);
+        // 已輸入數量的藥材（手動輸入或 AI 帶入都算），加上 AI 帶入但數量待補的藥材
+        const enteredKeys = computed(() => {
+          const keys = new Set(recognizedKeys.value);
+          Object.keys(itemBatchInputs).forEach(key => {
+            if (getItemTotalQty(key) > 0) keys.add(key);
+          });
+          return [...keys];
+        });
 
-        const recognizedCount = computed(() => recognizedKeys.value.length);
+        const hasRecognizedItems = computed(() => enteredKeys.value.length > 0);
+
+        const recognizedCount = computed(() => enteredKeys.value.length);
+
+        const isAiMode = computed(() => recognizedKeys.value.length > 0);
 
         const cardFilteredInventory = computed(() => {
           return inventoryList.value.filter(item => {
@@ -1665,7 +1677,7 @@
         return {
           LOW_STOCK_THRESHOLD, currentTab, searchKeyword, selectedCabinet, selectedWarnings, isWarningDropdownOpen,
           logFormHeader, cardSearchKeyword, cardFilteredInventory,
-          onlyRecognized, hasRecognizedItems, recognizedCount,
+          onlyRecognized, hasRecognizedItems, recognizedCount, isAiMode,
           getItemBatches, addBatchRow, removeBatchRow, getItemTotalQty,
           dbLogs, loading, syncError, submitting, analyzing, rawHerbData,
           inventoryList, filteredInventory, syncAll, fetchInventory, fetchHistoryMonth, submitBatchLogs, deleteLog, getExpStatusClass, handleImageUpload,
